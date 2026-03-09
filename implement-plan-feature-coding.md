@@ -26,38 +26,38 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 
 ## Features
 
-### 1. Login Screen ✅
+### 1. Login Page ✅
 - **Status**: Implemented
-- **File**: `lib/screens/login_screen.dart`
+- **File**: `lib/pages/login_page.dart`
 - **Description**: Login page with username/password fields and Google Sign-In button
 - **UI**: Teal gradient background, white card form, Google login + standard login buttons
 - **Data**: Mock authentication (any credentials accepted)
 
-### 2. Home Screen (หน้าหลัก) ✅
+### 2. Home Page (หน้าหลัก) ✅
 - **Status**: Implemented
-- **File**: `lib/screens/home_screen.dart`
+- **File**: `lib/pages/home_page.dart`
 - **Description**: Coming soon placeholder page
 - **UI**: Hospital illustration icon, "พบกับหน้าแรกในเร็ว ๆ นี้" text, version info
 
-### 3. Patient List Screen (คนไข้) ✅
+### 3. Patient List Page (คนไข้) ✅
 - **Status**: Implemented
-- **File**: `lib/screens/patient_list_screen.dart`
+- **File**: `lib/pages/patient_list_page.dart`
 - **Description**: List of registered patients with search functionality
 - **UI**: Search bar, patient cards with avatar, name, HN, phone, age, gender
 - **Responsive**: Tablet landscape — search panel ซ้าย (350px), card list ขวา (>= 700px)
 - **Data**: Mock patient data (5 patients)
 
-### 4. Appointment List Screen (นัดหมาย) ✅
+### 4. Appointment List Page (นัดหมาย) ✅
 - **Status**: Implemented
-- **File**: `lib/screens/appointment_list_screen.dart`
+- **File**: `lib/pages/appointment_list_page.dart`
 - **Description**: List of appointments with date filter and search
 - **UI**: Search bar, date picker, unregistered filter checkbox, appointment cards with doctor info
 - **Responsive**: Tablet landscape — search panel ซ้าย (350px), card list ขวา (>= 700px)
 - **Data**: Mock appointment data (4 appointments)
 
-### 5. Appointment Detail Screen (รายละเอียดนัดหมาย) ✅
+### 5. Appointment Detail Page (รายละเอียดนัดหมาย) ✅
 - **Status**: Implemented
-- **File**: `lib/screens/appointment_detail_screen.dart`
+- **File**: `lib/pages/appointment_detail_page.dart`
 - **Description**: รายละเอียดการนัดหมาย เข้าถึงจากการกดที่ AppointmentCard
 - **UI**:
   - การ์ดคนไข้ด้านบน: avatar, ชื่อ TH/EN, วดป เกิด, badge HN
@@ -66,17 +66,17 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
   - แท็ป "ข้อมูลนัด": วันที่นัด (badge สีเขียว), สถานะ, เวลามา, การ์ดแพทย์ (badge เวลานัดสีฟ้า), โน้ต
   - แท็ปอื่น: placeholder "พบกันเร็ว ๆ นี้"
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
-- **Navigation**: กดจาก AppointmentCard → push to detail screen
+- **Navigation**: กดจาก AppointmentCard → push to detail page
 
-### 6. Profile Screen (ข้อมูลส่วนตัว) ✅
+### 6. Profile Page (ข้อมูลส่วนตัว) ✅
 - **Status**: Implemented
-- **File**: `lib/screens/profile_screen.dart`
+- **File**: `lib/pages/profile_page.dart`
 - **Description**: User profile display with logout button
 - **UI**: Centered avatar, doctor name, logout button
 
 ### 7. Bottom Navigation ✅
 - **Status**: Implemented
-- **File**: `lib/screens/main_screen.dart`
+- **File**: `lib/pages/main_page.dart`
 - **Tabs**: หน้าหลัก | คนไข้ | นัดหมาย | ผู้ใช้งาน
 
 ---
@@ -90,14 +90,14 @@ lib/
 ├── models/
 │   ├── patient.dart
 │   └── appointment.dart
-├── screens/
-│   ├── login_screen.dart
-│   ├── main_screen.dart
-│   ├── home_screen.dart
-│   ├── patient_list_screen.dart
-│   ├── appointment_list_screen.dart
-│   ├── appointment_detail_screen.dart
-│   └── profile_screen.dart
+├── pages/
+│   ├── login_page.dart
+│   ├── main_page.dart
+│   ├── home_page.dart
+│   ├── patient_list_page.dart
+│   ├── appointment_list_page.dart
+│   ├── appointment_detail_page.dart
+│   └── profile_page.dart
 ├── widgets/
 │   ├── patient_card.dart
 │   └── appointment_card.dart
@@ -125,7 +125,7 @@ lib/
 ## Pending / Future Features
 - [ ] API integration (replace mock data)
 - [ ] Real Google Sign-In authentication
-- [ ] Patient detail screen
+- [ ] Patient detail page
 - [ ] Appointment detail — เนื้อหาแท็ป: การวัด, วินิจฉัย, สั่งยา, สั่งการรักษา
 - [ ] Profile editing
 - [ ] Push notifications

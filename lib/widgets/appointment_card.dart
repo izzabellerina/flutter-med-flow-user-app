@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../models/appointment.dart';
-import '../screens/appointment_detail_screen.dart';
+import '../pages/appointment_detail_page.dart';
 
 class AppointmentCard extends StatelessWidget {
   final Appointment appointment;
@@ -19,7 +19,7 @@ class AppointmentCard extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) =>
-                  AppointmentDetailScreen(appointment: appointment),
+                  AppointmentDetailPage(appointment: appointment),
             ),
           );
         },

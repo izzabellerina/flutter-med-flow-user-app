@@ -3,14 +3,14 @@ import '../app/theme.dart';
 import '../data/mock_data.dart';
 import '../widgets/appointment_card.dart';
 
-class AppointmentListScreen extends StatefulWidget {
-  const AppointmentListScreen({super.key});
+class AppointmentListPage extends StatefulWidget {
+  const AppointmentListPage({super.key});
 
   @override
-  State<AppointmentListScreen> createState() => _AppointmentListScreenState();
+  State<AppointmentListPage> createState() => _AppointmentListPageState();
 }
 
-class _AppointmentListScreenState extends State<AppointmentListScreen> {
+class _AppointmentListPageState extends State<AppointmentListPage> {
   final _searchController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   bool _showUnregisteredOnly = false;

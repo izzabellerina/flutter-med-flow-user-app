@@ -3,14 +3,14 @@ import '../app/theme.dart';
 import '../data/mock_data.dart';
 import '../widgets/patient_card.dart';
 
-class PatientListScreen extends StatefulWidget {
-  const PatientListScreen({super.key});
+class PatientListPage extends StatefulWidget {
+  const PatientListPage({super.key});
 
   @override
-  State<PatientListScreen> createState() => _PatientListScreenState();
+  State<PatientListPage> createState() => _PatientListPageState();
 }
 
-class _PatientListScreenState extends State<PatientListScreen> {
+class _PatientListPageState extends State<PatientListPage> {
   final _searchController = TextEditingController();
   List<dynamic> _filteredPatients = MockData.patients;
 

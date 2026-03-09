@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../data/mock_data.dart';
-import 'login_screen.dart';
+import 'login_page.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
 
   void _logout(BuildContext context) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const LoginPage()),
     );
   }
 
