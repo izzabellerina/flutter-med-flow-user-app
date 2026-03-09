@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../models/appointment.dart';
 
-class AppointmentDetailScreen extends StatefulWidget {
+class AppointmentDetailPage extends StatefulWidget {
   final Appointment appointment;
 
-  const AppointmentDetailScreen({super.key, required this.appointment});
+  const AppointmentDetailPage({super.key, required this.appointment});
 
   @override
-  State<AppointmentDetailScreen> createState() =>
-      _AppointmentDetailScreenState();
+  State<AppointmentDetailPage> createState() =>
+      _AppointmentDetailPageState();
 }
 
-class _AppointmentDetailScreenState extends State<AppointmentDetailScreen>
+class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isTelemedActive = false;
