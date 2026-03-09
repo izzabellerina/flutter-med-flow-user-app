@@ -64,7 +64,8 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
   - ปุ่ม "รายละเอียด" (info icon) + "Telemed" (phone icon)
   - 5 แท็ป: ข้อมูลนัด | การวัด | วินิจฉัย | สั่งยา | สั่งการรักษา
   - แท็ป "ข้อมูลนัด": วันที่นัด (badge สีเขียว), สถานะ, เวลามา, การ์ดแพทย์ (badge เวลานัดสีฟ้า), โน้ต
-  - แท็ปอื่น: placeholder "พบกันเร็ว ๆ นี้"
+  - แท็ป "วินิจฉัย": ฟอร์มเพิ่มวินิจฉัย (บันทึกผลตรวจ, คำวินิจฉัย, เลือก ICD10), รายการ "วินิจฉัยปัจจุบัน" (วันนี้), รายการ "ย้อนหลัง" (วันก่อน), ปุ่มแก้ไข/ลบ
+  - แท็ปอื่น (การวัด, สั่งยา, สั่งการรักษา): placeholder "พบกันเร็ว ๆ นี้"
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
 - **Navigation**: กดจาก AppointmentCard → push to detail page
 
@@ -89,7 +90,8 @@ lib/
 │   └── theme.dart
 ├── models/
 │   ├── patient.dart
-│   └── appointment.dart
+│   ├── appointment.dart
+│   └── diagnosis.dart
 ├── pages/
 │   ├── login_page.dart
 │   ├── main_page.dart
@@ -100,7 +102,8 @@ lib/
 │   └── profile_page.dart
 ├── widgets/
 │   ├── patient_card.dart
-│   └── appointment_card.dart
+│   ├── appointment_card.dart
+│   └── diagnosis_tab.dart
 └── data/
     └── mock_data.dart
 ```
@@ -120,13 +123,17 @@ lib/
 ### DoctorVisit (ใน appointment.dart)
 - doctorName, purpose, forDepartment?, doctorAvatarUrl?, appointmentTime?, department?
 
+### Diagnosis (`lib/models/diagnosis.dart`)
+- id, recordNote, diagnosisType, icd10, icdDesc, snTerm, diagnosisNote, recorderName, recordedAt
+- isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
+
 ---
 
 ## Pending / Future Features
 - [ ] API integration (replace mock data)
 - [ ] Real Google Sign-In authentication
 - [ ] Patient detail page
-- [ ] Appointment detail — เนื้อหาแท็ป: การวัด, วินิจฉัย, สั่งยา, สั่งการรักษา
+- [ ] Appointment detail — เนื้อหาแท็ป: การวัด, สั่งยา, สั่งการรักษา
 - [ ] Profile editing
 - [ ] Push notifications
 - [ ] Offline data caching
