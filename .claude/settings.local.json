@@ -3,7 +3,12 @@
     "allow": [
       "Bash(flutter analyze)",
       "Bash(flutter build apk --debug)",
-      "Bash(flutter pub get)"
+      "Bash(flutter pub get)",
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const fs = require\\(''fs''\\); const lines = fs.readFileSync\\(process.argv[1], ''utf8''\\).split\\(''\\\\n''\\); for \\(let i = Math.max\\(0, lines.length - 30\\); i < lines.length; i++\\) { try { const data = JSON.parse\\(lines[i]\\); if \\(data.role === ''user''\\) { const content = typeof data.content === ''string'' ? data.content : JSON.stringify\\(data.content\\); console.log\\(''USER:'', content.substring\\(0, 800\\)\\); } else if \\(data.role === ''assistant''\\) { const content = typeof data.content === ''string'' ? data.content : JSON.stringify\\(data.content\\); console.log\\(''ASSISTANT:'', content.substring\\(0, 800\\)\\); } } catch\\(e\\) {} }\" \"C:/Users/User/.claude/projects/c--Users-User-Desktop-ProjectWork-flutter-med-flow-user-app/bacd631a-3838-4e46-acea-8e64be44e436.jsonl\")",
+      "Bash(flutter analyze lib/widgets/appointment_card.dart lib/screens/appointment_detail_screen.dart)"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../models/appointment.dart';
+import '../screens/appointment_detail_screen.dart';
 
 class AppointmentCard extends StatelessWidget {
   final Appointment appointment;
@@ -12,7 +13,18 @@ class AppointmentCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  AppointmentDetailScreen(appointment: appointment),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,6 +132,7 @@ class AppointmentCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
       ),
     );
   }
