@@ -22,7 +22,6 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     'ข้อมูลนัด',
     'การวัด',
     'วินิจฉัย',
-    'สั่งยา',
     'สั่งการรักษา',
   ];
 
@@ -313,7 +312,6 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
               _buildAppointmentInfoTab(),
               _buildPlaceholderTab('การวัด'),
               const DiagnosisTab(),
-              _buildPlaceholderTab('สั่งยา'),
               _buildPlaceholderTab('สั่งการรักษา'),
             ],
           ),

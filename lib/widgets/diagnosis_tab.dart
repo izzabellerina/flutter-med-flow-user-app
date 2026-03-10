@@ -166,22 +166,23 @@ class _DiagnosisTabState extends State<DiagnosisTab> {
           // Add button
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.45,
-            child: OutlinedButton(
+            child: ElevatedButton(
               onPressed: _addDiagnosis,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryText,
-                side: BorderSide(color: AppTheme.lineColorD9),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryThemeApp,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+                elevation: 0,
               ),
               child: Text(
                 'เพิ่ม',
                 style: AppTheme.generalText(
                   16,
                   fonWeight: FontWeight.w600,
-                  color: AppTheme.primaryText,
+                  color: Colors.white,
                 ),
               ),
             ),
