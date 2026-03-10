@@ -10,6 +10,8 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - Flutter (Dart)
 - Material Design 3
 - Google Fonts (Athiti)
+- flutter_blue_plus (BLE medical device communication)
+- permission_handler (runtime permissions for Bluetooth)
 - Mock data (pending API integration)
 
 ## Color Theme (Teal-based)
@@ -64,7 +66,7 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
   - ปุ่ม "รายละเอียด" (info icon) + "Telemed" (phone icon)
   - 4 แท็ป: ข้อมูลนัด | การวัด | วินิจฉัย | สั่งการรักษา
   - แท็ป "ข้อมูลนัด": วันที่นัด (badge สีเขียว), สถานะ, เวลามา, การ์ดแพทย์ (badge เวลานัดสีฟ้า), โน้ต
-  - แท็ป "การวัด": 3 sub-tabs (สัญญาณชีพ | อาการ | โน้ตพยาบาล), ฟอร์มกรอกค่า vital signs (Bw, Ht, BMI auto-calc, sBp, dBp, Pr, O2, Temp), ตารางข้อมูลแบ่ง "ปัจจุบัน" / "ย้อนหลัง", ปุ่มลบ
+  - แท็ป "การวัด": ปุ่ม "อ่านค่าจากเครื่อง" (BLE), ฟอร์มกรอกค่า vital signs (Bw, Ht, BMI auto-calc, sBp, dBp, Pr, O2, Temp), ตารางข้อมูลแบ่ง "ปัจจุบัน" / "ย้อนหลัง", ปุ่มลบ
   - แท็ป "วินิจฉัย": ฟอร์มเพิ่มวินิจฉัย (บันทึกผลตรวจ, คำวินิจฉัย, เลือก ICD10), รายการ "วินิจฉัยปัจจุบัน" (วันนี้), รายการ "ย้อนหลัง" (วันก่อน), ปุ่มแก้ไข/ลบ
   - แท็ป "สั่งการรักษา": ปุ่ม "+สั่งยา" / "+หัตถการ", ฟอร์ม inline ตามประเภท, การ์ดแสดงข้อมูล (badge สีตามประเภท, toggle ON/OFF, ปุ่มแก้ไข/ลบ), แบ่ง "ปัจจุบัน" / "ย้อนหลัง"
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
@@ -103,12 +105,17 @@ lib/
 │   ├── appointment_list_page.dart
 │   ├── appointment_detail_page.dart
 │   └── profile_page.dart
+├── services/
+│   ├── ble_service.dart
+│   ├── ble_permission_handler.dart
+│   └── ble_gatt_parser.dart
 ├── widgets/
 │   ├── patient_card.dart
 │   ├── appointment_card.dart
 │   ├── diagnosis_tab.dart
 │   ├── measurement_tab.dart
-│   └── treatment_order_tab.dart
+│   ├── treatment_order_tab.dart
+│   └── ble_measurement_bottom_sheet.dart
 └── data/
     └── mock_data.dart
 ```
@@ -141,6 +148,29 @@ lib/
 - id, type (enum: medicine/procedure), name, usage?, isActive, recorderName, recordedAt
 - isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
 - copyWith(isActive): สร้าง copy พร้อมเปลี่ยน isActive
+
+### BleDeviceInfo (`lib/models/ble_device_info.dart`)
+- device (BluetoothDevice), name, rssi, serviceUuids
+- fromScanResult(ScanResult): factory สร้างจาก scan result
+
+### BleMeasurementResult (`lib/models/ble_measurement_result.dart`)
+- deviceType (enum: bloodPressure/weightScale/pulseOximeter/thermometer)
+- systolic?, diastolic?, pulseRate?, weight?, spO2?, temperature?
+- timestamp
+
+---
+
+## BLE Integration
+
+### ฟีเจอร์ "อ่านค่าจากเครื่อง" ✅
+- **Status**: Implemented
+- **ปุ่มใน**: `lib/widgets/measurement_tab.dart`
+- **Bottom Sheet**: `lib/widgets/ble_measurement_bottom_sheet.dart`
+- **Services**: `lib/services/ble_service.dart`, `ble_permission_handler.dart`, `ble_gatt_parser.dart`
+- **Description**: เชื่อมต่ออุปกรณ์วัดค่าทางการแพทย์ผ่าน Bluetooth Low Energy
+- **4 แท็ป**: ความดัน (0x1810) | น้ำหนัก (0x181D) | O2 (0x1822) | อุณหภูมิ (0x1809)
+- **Flow**: กดปุ่ม → เปิด bottom sheet → สแกน → เลือกอุปกรณ์ → เชื่อมต่อ → อ่านค่า → autofill ฟอร์ม
+- **Platform Configs**: Android (BLUETOOTH_SCAN, BLUETOOTH_CONNECT, ACCESS_FINE_LOCATION), iOS (NSBluetoothAlwaysUsageDescription), macOS (com.apple.security.device.bluetooth)
 
 ---
 
