@@ -62,10 +62,11 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **UI**:
   - การ์ดคนไข้ด้านบน: avatar, ชื่อ TH/EN, วดป เกิด, badge HN
   - ปุ่ม "รายละเอียด" (info icon) + "Telemed" (phone icon)
-  - 5 แท็ป: ข้อมูลนัด | การวัด | วินิจฉัย | สั่งยา | สั่งการรักษา
+  - 4 แท็ป: ข้อมูลนัด | การวัด | วินิจฉัย | สั่งการรักษา
   - แท็ป "ข้อมูลนัด": วันที่นัด (badge สีเขียว), สถานะ, เวลามา, การ์ดแพทย์ (badge เวลานัดสีฟ้า), โน้ต
+  - แท็ป "การวัด": 3 sub-tabs (สัญญาณชีพ | อาการ | โน้ตพยาบาล), ฟอร์มกรอกค่า vital signs (Bw, Ht, BMI auto-calc, sBp, dBp, Pr, O2, Temp), ตารางข้อมูลแบ่ง "ปัจจุบัน" / "ย้อนหลัง", ปุ่มลบ
   - แท็ป "วินิจฉัย": ฟอร์มเพิ่มวินิจฉัย (บันทึกผลตรวจ, คำวินิจฉัย, เลือก ICD10), รายการ "วินิจฉัยปัจจุบัน" (วันนี้), รายการ "ย้อนหลัง" (วันก่อน), ปุ่มแก้ไข/ลบ
-  - แท็ปอื่น (การวัด, สั่งยา, สั่งการรักษา): placeholder "พบกันเร็ว ๆ นี้"
+  - แท็ป "สั่งการรักษา": placeholder "พบกันเร็ว ๆ นี้"
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
 - **Navigation**: กดจาก AppointmentCard → push to detail page
 
@@ -91,7 +92,8 @@ lib/
 ├── models/
 │   ├── patient.dart
 │   ├── appointment.dart
-│   └── diagnosis.dart
+│   ├── diagnosis.dart
+│   └── vital_sign.dart
 ├── pages/
 │   ├── login_page.dart
 │   ├── main_page.dart
@@ -103,7 +105,8 @@ lib/
 ├── widgets/
 │   ├── patient_card.dart
 │   ├── appointment_card.dart
-│   └── diagnosis_tab.dart
+│   ├── diagnosis_tab.dart
+│   └── measurement_tab.dart
 └── data/
     └── mock_data.dart
 ```
@@ -127,13 +130,19 @@ lib/
 - id, recordNote, diagnosisType, icd10, icdDesc, snTerm, diagnosisNote, recorderName, recordedAt
 - isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
 
+### VitalSign (`lib/models/vital_sign.dart`)
+- id, bw?, ht?, bmi?, sBp?, dBp?, pr?, o2?, temp?, recorderName, recordedAt
+- isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
+- calculateBmi(bw, ht) (static): คำนวณ BMI จาก น้ำหนัก/ส่วนสูง
+
 ---
 
 ## Pending / Future Features
 - [ ] API integration (replace mock data)
 - [ ] Real Google Sign-In authentication
 - [ ] Patient detail page
-- [ ] Appointment detail — เนื้อหาแท็ป: การวัด, สั่งยา, สั่งการรักษา
+- [ ] Appointment detail — เนื้อหาแท็ป: สั่งการรักษา (รวม สั่งยา)
+- [ ] Appointment detail — แท็ปการวัด sub-tabs: อาการ, โน้ตพยาบาล
 - [ ] Profile editing
 - [ ] Push notifications
 - [ ] Offline data caching

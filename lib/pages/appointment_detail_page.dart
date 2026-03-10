@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../models/appointment.dart';
 import '../widgets/diagnosis_tab.dart';
+import '../widgets/measurement_tab.dart';
 
 class AppointmentDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -310,7 +311,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
             controller: _tabController,
             children: [
               _buildAppointmentInfoTab(),
-              _buildPlaceholderTab('การวัด'),
+              const MeasurementTab(),
               const DiagnosisTab(),
               _buildPlaceholderTab('สั่งการรักษา'),
             ],
