@@ -66,7 +66,7 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
   - แท็ป "ข้อมูลนัด": วันที่นัด (badge สีเขียว), สถานะ, เวลามา, การ์ดแพทย์ (badge เวลานัดสีฟ้า), โน้ต
   - แท็ป "การวัด": 3 sub-tabs (สัญญาณชีพ | อาการ | โน้ตพยาบาล), ฟอร์มกรอกค่า vital signs (Bw, Ht, BMI auto-calc, sBp, dBp, Pr, O2, Temp), ตารางข้อมูลแบ่ง "ปัจจุบัน" / "ย้อนหลัง", ปุ่มลบ
   - แท็ป "วินิจฉัย": ฟอร์มเพิ่มวินิจฉัย (บันทึกผลตรวจ, คำวินิจฉัย, เลือก ICD10), รายการ "วินิจฉัยปัจจุบัน" (วันนี้), รายการ "ย้อนหลัง" (วันก่อน), ปุ่มแก้ไข/ลบ
-  - แท็ป "สั่งการรักษา": placeholder "พบกันเร็ว ๆ นี้"
+  - แท็ป "สั่งการรักษา": ปุ่ม "+สั่งยา" / "+หัตถการ", ฟอร์ม inline ตามประเภท, การ์ดแสดงข้อมูล (badge สีตามประเภท, toggle ON/OFF, ปุ่มแก้ไข/ลบ), แบ่ง "ปัจจุบัน" / "ย้อนหลัง"
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
 - **Navigation**: กดจาก AppointmentCard → push to detail page
 
@@ -93,7 +93,8 @@ lib/
 │   ├── patient.dart
 │   ├── appointment.dart
 │   ├── diagnosis.dart
-│   └── vital_sign.dart
+│   ├── vital_sign.dart
+│   └── treatment_order.dart
 ├── pages/
 │   ├── login_page.dart
 │   ├── main_page.dart
@@ -106,7 +107,8 @@ lib/
 │   ├── patient_card.dart
 │   ├── appointment_card.dart
 │   ├── diagnosis_tab.dart
-│   └── measurement_tab.dart
+│   ├── measurement_tab.dart
+│   └── treatment_order_tab.dart
 └── data/
     └── mock_data.dart
 ```
@@ -135,13 +137,17 @@ lib/
 - isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
 - calculateBmi(bw, ht) (static): คำนวณ BMI จาก น้ำหนัก/ส่วนสูง
 
+### TreatmentOrder (`lib/models/treatment_order.dart`)
+- id, type (enum: medicine/procedure), name, usage?, isActive, recorderName, recordedAt
+- isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
+- copyWith(isActive): สร้าง copy พร้อมเปลี่ยน isActive
+
 ---
 
 ## Pending / Future Features
 - [ ] API integration (replace mock data)
 - [ ] Real Google Sign-In authentication
 - [ ] Patient detail page
-- [ ] Appointment detail — เนื้อหาแท็ป: สั่งการรักษา (รวม สั่งยา)
 - [ ] Appointment detail — แท็ปการวัด sub-tabs: อาการ, โน้ตพยาบาล
 - [ ] Profile editing
 - [ ] Push notifications

@@ -3,6 +3,7 @@ import '../app/theme.dart';
 import '../models/appointment.dart';
 import '../widgets/diagnosis_tab.dart';
 import '../widgets/measurement_tab.dart';
+import '../widgets/treatment_order_tab.dart';
 
 class AppointmentDetailPage extends StatefulWidget {
   final Appointment appointment;
@@ -313,7 +314,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
               _buildAppointmentInfoTab(),
               const MeasurementTab(),
               const DiagnosisTab(),
-              _buildPlaceholderTab('สั่งการรักษา'),
+              const TreatmentOrderTab(),
             ],
           ),
         ),
@@ -606,39 +607,6 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // Placeholder tabs
-  // ══════════════════════════════════════════════════════════════════════════
-
-  Widget _buildPlaceholderTab(String title) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.construction,
-              size: 48,
-              color: AppTheme.secondaryText62.withValues(alpha: 0.5)),
-          const SizedBox(height: 12),
-          Text(
-            'หน้า $title',
-            style: AppTheme.generalText(
-              16,
-              fonWeight: FontWeight.w500,
-              color: AppTheme.secondaryText62,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'พบกันเร็ว ๆ นี้',
-            style: AppTheme.generalText(
-              14,
-              color: AppTheme.secondaryText9A,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
