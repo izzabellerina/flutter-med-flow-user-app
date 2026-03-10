@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app/theme.dart';
 import '../models/vital_sign.dart';
+import 'ble_measurement_bottom_sheet.dart';
 
 class MeasurementTab extends StatefulWidget {
   const MeasurementTab({super.key});
@@ -66,6 +67,20 @@ class _MeasurementTabState extends State<MeasurementTab> {
 
   List<VitalSign> get _historyVitalSigns =>
       _vitalSigns.where((v) => !v.isToday).toList();
+
+  void _openBleBottomSheet() async {
+    final result = await BleMeasurementBottomSheet.show(context);
+    if (result == null) return;
+
+    setState(() {
+      if (result.bw != null) _bwController.text = result.bw!.toStringAsFixed(1);
+      if (result.sBp != null) _sBpController.text = result.sBp!.round().toString();
+      if (result.dBp != null) _dBpController.text = result.dBp!.round().toString();
+      if (result.pr != null) _prController.text = result.pr!.round().toString();
+      if (result.o2 != null) _o2Controller.text = result.o2!.round().toString();
+      if (result.temp != null) _tempController.text = result.temp!.toStringAsFixed(1);
+    });
+  }
 
   void _addVitalSign() {
     if (_bwController.text.isEmpty &&
@@ -174,29 +189,55 @@ class _MeasurementTabState extends State<MeasurementTab> {
               width: MediaQuery.of(context).size.width * 0.45),
           const SizedBox(height: 16),
 
-          // Add button
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.45,
-            child: ElevatedButton(
-              onPressed: _addVitalSign,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryThemeApp,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          // Buttons row: เพิ่ม + อ่านค่าจากเครื่อง
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _addVitalSign,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size.zero,
+                    backgroundColor: AppTheme.primaryThemeApp,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'เพิ่ม',
+                    style: AppTheme.generalText(
+                      16,
+                      fonWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                elevation: 0,
               ),
-              child: Text(
-                'เพิ่ม',
-                style: AppTheme.generalText(
-                  16,
-                  fonWeight: FontWeight.w600,
-                  color: Colors.white,
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _openBleBottomSheet,
+                  icon: const Icon(Icons.bluetooth, size: 18),
+                  label: Text(
+                    'อ่านค่าจากเครื่อง',
+                    style: AppTheme.generalText(
+                      14,
+                      fonWeight: FontWeight.w600,
+                      color: AppTheme.primaryThemeApp,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
 
           const SizedBox(height: 24),
