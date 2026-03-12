@@ -12,8 +12,7 @@ class AppointmentDetailPage extends StatefulWidget {
   const AppointmentDetailPage({super.key, required this.appointment});
 
   @override
-  State<AppointmentDetailPage> createState() =>
-      _AppointmentDetailPageState();
+  State<AppointmentDetailPage> createState() => _AppointmentDetailPageState();
 }
 
 class _AppointmentDetailPageState extends State<AppointmentDetailPage>
@@ -80,7 +79,8 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                     child: Column(
                       children: [
                         _buildPatientCard(),
-                        if (_isTelemedActive) Expanded(child: _buildTelemedPanel()),
+                        if (_isTelemedActive)
+                          Expanded(child: _buildTelemedPanel()),
                       ],
                     ),
                   ),
@@ -125,8 +125,11 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                       ? NetworkImage(appt.patientAvatarUrl!)
                       : null,
                   child: appt.patientAvatarUrl == null
-                      ? Icon(Icons.person,
-                          size: 40, color: AppTheme.secondaryText62)
+                      ? Icon(
+                          Icons.person,
+                          size: 40,
+                          color: AppTheme.secondaryText62,
+                        )
                       : null,
                 ),
                 const SizedBox(width: 14),
@@ -168,12 +171,15 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.hnBadgeBgColor,
                             borderRadius: BorderRadius.circular(16),
-                            border:
-                                Border.all(color: AppTheme.hnBadgeBorderColor),
+                            border: Border.all(
+                              color: AppTheme.hnBadgeBorderColor,
+                            ),
                           ),
                           child: Text(
                             'HN : ${appt.patientHn}',
@@ -191,6 +197,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
 
                 // Action buttons
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     _ActionIconButton(
                       icon: Icons.info_outline,
@@ -205,7 +212,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                         );
                       },
                     ),
-                    const SizedBox(height: 8),
+                    // const SizedBox(height: 2),
                     _ActionIconButton(
                       icon: Icons.phone,
                       label: 'Telemed',
@@ -258,10 +265,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
 
           Text(
             'กำลังรอการเชื่อมต่อ...',
-            style: AppTheme.generalText(
-              14,
-              color: Colors.white60,
-            ),
+            style: AppTheme.generalText(14, color: Colors.white60),
           ),
 
           const Spacer(),
@@ -302,10 +306,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
             isScrollable: true,
             labelColor: AppTheme.primaryThemeApp,
             unselectedLabelColor: AppTheme.secondaryText62,
-            labelStyle: AppTheme.generalText(
-              15,
-              fonWeight: FontWeight.w600,
-            ),
+            labelStyle: AppTheme.generalText(15, fonWeight: FontWeight.w600),
             unselectedLabelStyle: AppTheme.generalText(14),
             indicatorColor: AppTheme.primaryThemeApp,
             indicatorWeight: 3,
@@ -399,10 +400,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
             ),
             child: Text(
               appt.note?.isNotEmpty == true ? appt.note! : '-',
-              style: AppTheme.generalText(
-                14,
-                color: AppTheme.secondaryText62,
-              ),
+              style: AppTheme.generalText(14, color: AppTheme.secondaryText62),
             ),
           ),
         ],
@@ -449,8 +447,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           return Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -483,8 +483,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.calendar_today,
-              size: 14, color: AppTheme.primaryThemeApp),
+          Icon(Icons.calendar_today, size: 14, color: AppTheme.primaryThemeApp),
           const SizedBox(width: 6),
           Text(
             'วันที่นัด $date',
@@ -515,14 +514,12 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           // Doctor avatar
           CircleAvatar(
             radius: 24,
-            backgroundColor:
-                AppTheme.primaryThemeApp.withValues(alpha: 0.1),
+            backgroundColor: AppTheme.primaryThemeApp.withValues(alpha: 0.1),
             backgroundImage: visit.doctorAvatarUrl != null
                 ? NetworkImage(visit.doctorAvatarUrl!)
                 : null,
             child: visit.doctorAvatarUrl == null
-                ? Icon(Icons.person,
-                    size: 26, color: AppTheme.primaryThemeApp)
+                ? Icon(Icons.person, size: 26, color: AppTheme.primaryThemeApp)
                 : null,
           ),
           const SizedBox(width: 12),
@@ -544,8 +541,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                 // Time badge
                 if (visit.appointmentTime != null)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     margin: const EdgeInsets.only(bottom: 6),
                     decoration: BoxDecoration(
                       color: AppTheme.timeBadgeColor,
@@ -554,8 +553,11 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.access_time,
-                            size: 14, color: AppTheme.timeBadgeTextColor),
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: AppTheme.timeBadgeTextColor,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'เวลานัด ${visit.appointmentTime} น.',
@@ -615,7 +617,6 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
         return AppTheme.secondaryText62;
     }
   }
-
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -637,25 +638,25 @@ class _ActionIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon,
-              size: 18,
-              color: isActive ? AppTheme.statusGreen : AppTheme.primaryThemeApp),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppTheme.generalText(
-              13,
-              fonWeight: FontWeight.w500,
-              color: isActive ? AppTheme.statusGreen : AppTheme.primaryThemeApp,
-            ),
-          ),
-        ],
+    final color = isActive ? AppTheme.statusGreen : AppTheme.primaryThemeApp;
+
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(
+        label,
+        style: AppTheme.generalText(
+          13,
+          fonWeight: FontWeight.w500,
+          color: color,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: color),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: Size.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
