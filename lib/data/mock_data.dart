@@ -152,6 +152,82 @@ class MockData {
     'role': 'แพทย์',
   };
 
+  /// รายการยา (mock)
+  static final List<Map<String, String>> medicines = [
+    {'id': 'MED001', 'name': 'Paracetamol 500 mg', 'usage': 'รับประทานครั้งละ 1-2 เม็ด ทุก 4-6 ชั่วโมง เมื่อมีอาการปวด'},
+    {'id': 'MED002', 'name': 'Ibuprofen 400 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
+    {'id': 'MED003', 'name': 'Amoxicillin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
+    {'id': 'MED004', 'name': 'Dexamethasone 0.025% in BSS Eye Drops 16 mL', 'usage': 'ตามคำสั่งแพทย์'},
+    {'id': 'MED005', 'name': 'Metformin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง หลังอาหาร'},
+    {'id': 'MED006', 'name': 'Amlodipine 5 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง'},
+    {'id': 'MED007', 'name': 'Omeprazole 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนอาหารเช้า'},
+    {'id': 'MED008', 'name': 'Atorvastatin 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
+    {'id': 'MED009', 'name': 'Losartan 50 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง'},
+    {'id': 'MED010', 'name': 'Aspirin 81 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง หลังอาหาร'},
+    {'id': 'MED011', 'name': 'Ciprofloxacin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง'},
+    {'id': 'MED012', 'name': 'Prednisolone 5 mg', 'usage': 'ตามคำสั่งแพทย์'},
+    {'id': 'MED013', 'name': 'Diclofenac 25 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
+    {'id': 'MED014', 'name': 'Cetirizine 10 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
+    {'id': 'MED015', 'name': 'Simvastatin 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
+  ];
+
+  /// วิธีใช้ยา (mock)
+  static final List<Map<String, String>> medicineUsages = [
+    {'id': 'USG001', 'name': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง'},
+    {'id': 'USG002', 'name': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง'},
+    {'id': 'USG003', 'name': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
+    {'id': 'USG004', 'name': 'รับประทานครั้งละ 1-2 เม็ด ทุก 4-6 ชั่วโมง เมื่อมีอาการปวด'},
+    {'id': 'USG005', 'name': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนอาหารเช้า'},
+    {'id': 'USG006', 'name': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
+    {'id': 'USG007', 'name': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง หลังอาหาร'},
+    {'id': 'USG008', 'name': 'หยดตา 1 หยด วันละ 4 ครั้ง'},
+    {'id': 'USG009', 'name': 'หยดตา 1 หยด ทุก 1 ชั่วโมง'},
+    {'id': 'USG010', 'name': 'ทาบริเวณที่เป็น วันละ 2 ครั้ง'},
+    {'id': 'USG011', 'name': 'ตามคำสั่งแพทย์'},
+    {'id': 'USG012', 'name': 'อมใต้ลิ้น 1 เม็ด เมื่อมีอาการ'},
+    {'id': 'USG013', 'name': 'พ่นปาก 1-2 พ่น วันละ 2 ครั้ง'},
+    {'id': 'USG014', 'name': 'ฉีดเข้าใต้ผิวหนัง วันละ 1 ครั้ง'},
+    {'id': 'USG015', 'name': 'รับประทานครั้งละ 2 เม็ด วันละ 2 ครั้ง หลังอาหาร'},
+  ];
+
+  /// รายการหัตถการ (mock)
+  static final List<Map<String, String>> procedures = [
+    {'id': 'PRC001', 'name': 'Xen Implantation/OS'},
+    {'id': 'PRC002', 'name': 'Phacoemulsification with IOL implantation'},
+    {'id': 'PRC003', 'name': 'Trabeculectomy'},
+    {'id': 'PRC004', 'name': 'Intravitreal Injection'},
+    {'id': 'PRC005', 'name': 'YAG Laser Capsulotomy'},
+    {'id': 'PRC006', 'name': 'Selective Laser Trabeculoplasty (SLT)'},
+    {'id': 'PRC007', 'name': 'Pterygium Excision with Graft'},
+    {'id': 'PRC008', 'name': 'Chalazion Incision & Curettage'},
+    {'id': 'PRC009', 'name': 'Fundus Fluorescein Angiography (FFA)'},
+    {'id': 'PRC010', 'name': 'Retinal Laser Photocoagulation'},
+  ];
+
+  /// รายการ ICD-10 (mock)
+  static final List<Map<String, String>> icd10Codes = [
+    {'code': 'A00.0', 'desc': 'Cholera due to Vibrio cholerae 01, biovar cholerae', 'snTerm': 'Cholera due to Vibrio cholerae O1 Classical biotype (disorder)'},
+    {'code': 'A09.0', 'desc': 'Other and unspecified gastroenteritis and colitis of infectious origin', 'snTerm': 'Infectious gastroenteritis (disorder)'},
+    {'code': 'E11.9', 'desc': 'Type 2 diabetes mellitus without complications', 'snTerm': 'Type 2 diabetes mellitus (disorder)'},
+    {'code': 'E78.0', 'desc': 'Pure hypercholesterolaemia', 'snTerm': 'Hypercholesterolemia (disorder)'},
+    {'code': 'H40.1', 'desc': 'Primary open-angle glaucoma', 'snTerm': 'Open-angle glaucoma (disorder)'},
+    {'code': 'H25.9', 'desc': 'Senile cataract, unspecified', 'snTerm': 'Age-related cataract (disorder)'},
+    {'code': 'H11.0', 'desc': 'Pterygium', 'snTerm': 'Pterygium (disorder)'},
+    {'code': 'H35.3', 'desc': 'Degeneration of macula and posterior pole', 'snTerm': 'Macular degeneration (disorder)'},
+    {'code': 'I10', 'desc': 'Essential (primary) hypertension', 'snTerm': 'Essential hypertension (disorder)'},
+    {'code': 'I25.1', 'desc': 'Atherosclerotic heart disease', 'snTerm': 'Atherosclerotic heart disease (disorder)'},
+    {'code': 'J06.9', 'desc': 'Acute upper respiratory infection, unspecified', 'snTerm': 'Upper respiratory infection (disorder)'},
+    {'code': 'J45.9', 'desc': 'Asthma, unspecified', 'snTerm': 'Asthma (disorder)'},
+    {'code': 'K21.0', 'desc': 'Gastro-oesophageal reflux disease with oesophagitis', 'snTerm': 'Gastroesophageal reflux disease with esophagitis (disorder)'},
+    {'code': 'K29.7', 'desc': 'Gastritis, unspecified', 'snTerm': 'Gastritis (disorder)'},
+    {'code': 'M54.5', 'desc': 'Low back pain', 'snTerm': 'Low back pain (finding)'},
+    {'code': 'N39.0', 'desc': 'Urinary tract infection, site not specified', 'snTerm': 'Urinary tract infection (disorder)'},
+    {'code': 'R50.9', 'desc': 'Fever, unspecified', 'snTerm': 'Fever (finding)'},
+    {'code': 'R51', 'desc': 'Headache', 'snTerm': 'Headache (finding)'},
+    {'code': 'Z00.0', 'desc': 'General medical examination', 'snTerm': 'General examination of patient (procedure)'},
+    {'code': 'Z01.0', 'desc': 'Examination of eyes and vision', 'snTerm': 'Eye examination (procedure)'},
+  ];
+
   /// ข้อมูลลงทะเบียนคนไข้ (mock) — key = patientHn
   static final Map<String, PatientRegistration> patientRegistrations = {
     '260306-002': PatientRegistration(

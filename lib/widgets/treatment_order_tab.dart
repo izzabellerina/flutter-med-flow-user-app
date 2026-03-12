@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
+import '../data/mock_data.dart';
 import '../models/treatment_order.dart';
+import 'search_selector_field.dart';
 
 class TreatmentOrderTab extends StatefulWidget {
   const TreatmentOrderTab({super.key});
@@ -10,8 +12,9 @@ class TreatmentOrderTab extends StatefulWidget {
 }
 
 class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
-  final _nameController = TextEditingController();
-  final _usageController = TextEditingController();
+  SelectorItem? _selectedMedicine;
+  SelectorItem? _selectedProcedure;
+  SelectorItem? _selectedUsage;
 
   // null = ไม่แสดงฟอร์ม, medicine/procedure = แสดงฟอร์มตามประเภท
   TreatmentType? _activeFormType;
@@ -51,8 +54,14 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
   List<TreatmentOrder> get _historyOrders =>
       _orders.where((o) => !o.isToday).toList();
 
+  SelectorItem? get _activeSelectedItem =>
+      _activeFormType == TreatmentType.medicine
+          ? _selectedMedicine
+          : _selectedProcedure;
+
   void _addOrder() {
-    if (_nameController.text.isEmpty) return;
+    final selected = _activeSelectedItem;
+    if (selected == null) return;
 
     setState(() {
       _orders.insert(
@@ -60,16 +69,17 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
         TreatmentOrder(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           type: _activeFormType!,
-          name: _nameController.text,
+          name: selected.title,
           usage: _activeFormType == TreatmentType.medicine
-              ? _usageController.text
+              ? _selectedUsage?.title
               : null,
           recorderName: 'พญ. ธนวัฒน์ แก้วพรหม',
           recordedAt: DateTime.now(),
         ),
       );
-      _nameController.clear();
-      _usageController.clear();
+      _selectedMedicine = null;
+      _selectedProcedure = null;
+      _selectedUsage = null;
       _activeFormType = null;
     });
   }
@@ -85,8 +95,6 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _usageController.dispose();
     super.dispose();
   }
 
@@ -193,8 +201,9 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
             _activeFormType = null;
           } else {
             _activeFormType = type;
-            _nameController.clear();
-            _usageController.clear();
+            _selectedMedicine = null;
+            _selectedProcedure = null;
+            _selectedUsage = null;
           }
         });
       },
@@ -246,16 +255,59 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
           ),
           const SizedBox(height: 12),
 
-          _buildFormField(
+          SearchSelectorField(
             label: isMedicine ? 'ชื่อยา' : 'ชื่อหัตถการ',
-            controller: _nameController,
+            hint: isMedicine ? 'ค้นหาชื่อยา...' : 'ค้นหาชื่อหัตถการ...',
+            selectedItem: _activeSelectedItem,
+            items: isMedicine
+                ? MockData.medicines
+                    .map((m) => SelectorItem(
+                        id: m['id']!, title: m['name']!))
+                    .toList()
+                : MockData.procedures
+                    .map((p) => SelectorItem(
+                        id: p['id']!, title: p['name']!))
+                    .toList(),
+            onSelected: (item) {
+              setState(() {
+                if (isMedicine) {
+                  _selectedMedicine = item;
+                  // autofill usage from medicine's default usage
+                  final med = MockData.medicines
+                      .where((m) => m['id'] == item.id)
+                      .firstOrNull;
+                  if (med != null && med['usage'] != null) {
+                    final usageText = med['usage']!;
+                    final match = MockData.medicineUsages
+                        .where((u) => u['name'] == usageText)
+                        .firstOrNull;
+                    if (match != null) {
+                      _selectedUsage = SelectorItem(
+                          id: match['id']!, title: match['name']!);
+                    }
+                  }
+                } else {
+                  _selectedProcedure = item;
+                }
+              });
+            },
           ),
 
           if (isMedicine) ...[
             const SizedBox(height: 12),
-            _buildFormField(
+            SearchSelectorField(
               label: 'วิธีใช้',
-              controller: _usageController,
+              hint: 'ค้นหาวิธีใช้ยา...',
+              selectedItem: _selectedUsage,
+              items: MockData.medicineUsages
+                  .map((u) =>
+                      SelectorItem(id: u['id']!, title: u['name']!))
+                  .toList(),
+              onSelected: (item) {
+                setState(() {
+                  _selectedUsage = item;
+                });
+              },
             ),
           ],
 
@@ -286,41 +338,6 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFormField({
-    required String label,
-    required TextEditingController controller,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTheme.generalText(
-            15,
-            fonWeight: FontWeight.w600,
-            color: AppTheme.primaryText,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.lineColorD9),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.lineColorD9),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
