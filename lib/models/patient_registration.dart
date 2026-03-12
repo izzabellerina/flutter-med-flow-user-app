@@ -34,6 +34,8 @@ class PatientRegistration {
   final String? familyHistory;
   final String? smokingStatus;
   final String? drinkingStatus;
+  final String? otherAllergy;
+  final String? foodAllergy;
 
   // แพ้ยา
   final List<DrugAllergy> drugAllergies;
@@ -67,6 +69,8 @@ class PatientRegistration {
     this.familyHistory,
     this.smokingStatus,
     this.drinkingStatus,
+    this.otherAllergy,
+    this.foodAllergy,
     this.drugAllergies = const [],
   });
 }
