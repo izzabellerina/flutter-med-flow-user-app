@@ -4,6 +4,7 @@ import '../models/appointment.dart';
 import '../widgets/diagnosis_tab.dart';
 import '../widgets/measurement_tab.dart';
 import '../widgets/patient_detail_bottom_sheet.dart';
+import '../widgets/screening_tab.dart';
 import '../widgets/treatment_order_tab.dart';
 
 class AppointmentDetailPage extends StatefulWidget {
@@ -22,6 +23,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
 
   final List<String> _tabLabels = const [
     'ข้อมูลนัด',
+    'คัดกรอง',
     'การวัด',
     'วินิจฉัย',
     'สั่งการรักษา',
@@ -322,6 +324,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
             controller: _tabController,
             children: [
               _buildAppointmentInfoTab(),
+              const ScreeningTab(),
               const MeasurementTab(),
               const DiagnosisTab(),
               const TreatmentOrderTab(),
