@@ -180,10 +180,28 @@ class _BleMeasurementBottomSheetState extends State<BleMeasurementBottomSheet>
         await _bleService.connect(tabState.selectedDevice!.device);
       }
 
-      setState(() => tabState.status = _BleTabStatus.reading);
+      setState(() {
+        tabState.status = _BleTabStatus.reading;
+        tabState.cuffPressure = null;
+      });
 
-      final result =
-          await _bleService.readMeasurement(_currentDeviceType);
+      final result = await _bleService.readMeasurement(
+        _currentDeviceType,
+        onIntermediateBp: _currentDeviceType == BleDeviceType.bloodPressure
+            ? (pressure) {
+                if (mounted) {
+                  setState(() => tabState.cuffPressure = pressure);
+                }
+              }
+            : null,
+        onIntermediateWeight: _currentDeviceType == BleDeviceType.weightScale
+            ? (weight) {
+                if (mounted) {
+                  setState(() => tabState.intermediateWeight = weight);
+                }
+              }
+            : null,
+      );
 
       setState(() {
         tabState.status = _BleTabStatus.done;
@@ -198,6 +216,16 @@ class _BleMeasurementBottomSheetState extends State<BleMeasurementBottomSheet>
           tabState.error = e.toString();
         });
       }
+    } on BleDeviceDisconnectedException {
+      // เครื่องตัดการเชื่อมต่อเอง (พบบ่อยในเครื่องวัดความดัน)
+      if (mounted) {
+        setState(() {
+          tabState.status = _BleTabStatus.idle;
+          tabState.error =
+              'เครื่องตัดการเชื่อมต่อ — กรุณากดวัดค่าที่เครื่องก่อน แล้วกด "เชื่อมต่อเครื่อง" อีกครั้ง';
+        });
+      }
+      _bleService.disconnect();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -250,11 +278,8 @@ class _BleMeasurementBottomSheetState extends State<BleMeasurementBottomSheet>
   }
 
   void _onNext() {
-    if (_tabController.index < 3) {
-      _tabController.animateTo(_tabController.index + 1);
-    } else {
-      _returnResults();
-    }
+    final nextIndex = (_tabController.index + 1) % _tabController.length;
+    _tabController.animateTo(nextIndex);
   }
 
   void _onCancel() {
@@ -339,8 +364,12 @@ class _BleMeasurementBottomSheetState extends State<BleMeasurementBottomSheet>
             _buildStatusCard('กำลังเชื่อมต่อ...', Icons.bluetooth_connected),
 
           if (tabState.status == _BleTabStatus.reading)
-            _buildStatusCard(
-                'กำลังรออ่านค่าจากเครื่อง...', Icons.monitor_heart),
+            deviceType == BleDeviceType.bloodPressure
+                ? _buildBpReadingCard(tabState.cuffPressure)
+                : deviceType == BleDeviceType.weightScale
+                    ? _buildWeightReadingCard(tabState.intermediateWeight)
+                    : _buildStatusCard(
+                        'กำลังรออ่านค่าจากเครื่อง...', Icons.monitor_heart),
 
           // Error
           if (tabState.error != null) ...[
@@ -456,6 +485,96 @@ class _BleMeasurementBottomSheetState extends State<BleMeasurementBottomSheet>
           const SizedBox(height: 12),
           Text(
             'กำลังสแกนอุปกรณ์...',
+            style: AppTheme.generalText(15, color: AppTheme.secondaryText62),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeightReadingCard(double? weight) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.dateBadgeColor,
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: AppTheme.primaryThemeApp.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: AppTheme.primaryThemeApp,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (weight != null) ...[
+            Text(
+              weight.toStringAsFixed(1),
+              style: AppTheme.generalText(48,
+                  fonWeight: FontWeight.bold, color: AppTheme.primaryText),
+            ),
+            Text(
+              'kg',
+              style: AppTheme.generalText(18, color: AppTheme.secondaryText62),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Text(
+            weight != null
+                ? 'กำลังรอค่านิ่ง...'
+                : 'กรุณาขึ้นชั่งน้ำหนัก...',
+            style: AppTheme.generalText(15, color: AppTheme.secondaryText62),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBpReadingCard(double? cuffPressure) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.dateBadgeColor,
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: AppTheme.primaryThemeApp.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: AppTheme.primaryThemeApp,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (cuffPressure != null) ...[
+            Text(
+              '${cuffPressure.round()}',
+              style: AppTheme.generalText(48,
+                  fonWeight: FontWeight.bold, color: AppTheme.primaryText),
+            ),
+            Text(
+              'mmHg',
+              style: AppTheme.generalText(18, color: AppTheme.secondaryText62),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Text(
+            cuffPressure != null
+                ? 'กำลังวัดความดัน...'
+                : 'กรุณากดวัดค่าที่เครื่อง...',
             style: AppTheme.generalText(15, color: AppTheme.secondaryText62),
           ),
         ],
@@ -773,4 +892,6 @@ class _TabState {
   BleDeviceInfo? selectedDevice;
   BleMeasurementResult? result;
   String? error;
+  double? cuffPressure; // ค่าความดัน cuff realtime (เฉพาะแท็ปความดัน)
+  double? intermediateWeight; // ค่าน้ำหนัก realtime (เฉพาะแท็ปน้ำหนัก)
 }

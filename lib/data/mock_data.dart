@@ -1,5 +1,6 @@
 import '../models/patient.dart';
 import '../models/appointment.dart';
+import '../models/patient_registration.dart';
 
 class MockData {
   static final List<Patient> patients = [
@@ -149,5 +150,78 @@ class MockData {
     'name': 'Dr. ธนวัฒน์ แก้วพรหม',
     'username': 'doctor_demo_01',
     'role': 'แพทย์',
+  };
+
+  /// ข้อมูลลงทะเบียนคนไข้ (mock) — key = patientHn
+  static final Map<String, PatientRegistration> patientRegistrations = {
+    '260306-002': PatientRegistration(
+      fullName: 'นางสาว ทดสอบผู้ติดต่อ ระบบใหม่',
+      fullNameEn: 'Miss THODSOB PHUTIDTOR RABOBMAI',
+      hn: '260306-002',
+      nationalId: '1104200345550',
+      gender: 'หญิง',
+      bloodType: '-',
+      birthDate: '15 มีนาคม 2539 | Mar 15, 1996',
+      age: 30,
+      religion: '-',
+      nationality: '-',
+      patientSource: 'TELEMED',
+      phone: '089-999-8888',
+      officePhone: '-',
+      email: '-',
+      currentAddress: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110',
+      maritalStatus: 'โสด',
+      occupation: 'พนักงานบริษัท',
+      workplace: 'บริษัท ทดสอบ จำกัด',
+      emergencyContact: 'นาย ทดสอบ ระบบใหม่',
+      emergencyPhone: '081-234-5678',
+      emergencyRelation: 'บิดา',
+      underlyingDisease: '-',
+      surgeryHistory: '-',
+      familyHistory: '-',
+      smokingStatus: 'ไม่สูบ',
+      drinkingStatus: 'ไม่ดื่ม',
+      drugAllergies: [],
+    ),
+    '260225-003': PatientRegistration(
+      fullName: 'นาง บุญมี ทองคำ',
+      fullNameEn: 'Mrs. BOONMEE THONGKHAM',
+      hn: '260225-003',
+      nationalId: '3100500789012',
+      gender: 'หญิง',
+      bloodType: 'O',
+      birthDate: '2 กรกฎาคม 2493 | Jul 2, 1950',
+      age: 75,
+      religion: 'พุทธ',
+      nationality: 'ไทย',
+      patientSource: 'Walk-in',
+      phone: '081-234-5678',
+      officePhone: '-',
+      email: '-',
+      currentAddress: '45/2 ม.3 ต.บางปู อ.เมือง จ.สมุทรปราการ 10280',
+      maritalStatus: 'สมรส',
+      occupation: 'แม่บ้าน',
+      workplace: '-',
+      emergencyContact: 'นาย สมชาย ทองคำ',
+      emergencyPhone: '089-876-5432',
+      emergencyRelation: 'บุตร',
+      underlyingDisease: 'เบาหวาน, ความดันโลหิตสูง',
+      surgeryHistory: 'ผ่าตัดไส้ติ่ง พ.ศ.2545',
+      familyHistory: 'บิดาเป็นเบาหวาน',
+      smokingStatus: 'ไม่สูบ',
+      drinkingStatus: 'ไม่ดื่ม',
+      drugAllergies: [
+        DrugAllergy(
+          drugName: 'Aspirin',
+          reaction: 'ผื่นแดง คัน',
+          severity: 'moderate',
+        ),
+        DrugAllergy(
+          drugName: 'Penicillin',
+          reaction: 'หายใจลำบาก บวม',
+          severity: 'severe',
+        ),
+      ],
+    ),
   };
 }

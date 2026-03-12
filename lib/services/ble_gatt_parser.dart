@@ -85,6 +85,69 @@ class BleGattParser {
     );
   }
 
+  /// Parse Body Composition Measurement (UUID 0x2A9C)
+  /// ดึงค่าน้ำหนักจากเครื่องชั่งที่ใช้ Body Composition Service (0x181B)
+  static BleMeasurementResult parseBodyComposition(List<int> data) {
+    final bytes = Uint8List.fromList(data);
+    final byteData = ByteData.sublistView(bytes);
+    final flags = byteData.getUint16(0, Endian.little);
+    final isImperial = (flags & 0x01) != 0;
+
+    // ข้าม fields ตามลำดับ spec จนถึง Weight
+    int offset = 2; // flags (2 bytes)
+
+    // Body Fat Percentage (always present)
+    offset += 2;
+
+    // Time Stamp (7 bytes) if bit 1
+    if ((flags & 0x02) != 0) offset += 7;
+    // User ID (1 byte) if bit 2
+    if ((flags & 0x04) != 0) offset += 1;
+    // Basal Metabolism (2 bytes) if bit 3
+    if ((flags & 0x08) != 0) offset += 2;
+    // Muscle Percentage (2 bytes) if bit 4
+    if ((flags & 0x10) != 0) offset += 2;
+    // Muscle Mass (2 bytes) if bit 5
+    if ((flags & 0x20) != 0) offset += 2;
+    // Fat Free Mass (2 bytes) if bit 6
+    if ((flags & 0x40) != 0) offset += 2;
+    // Soft Lean Mass (2 bytes) if bit 7
+    if ((flags & 0x80) != 0) offset += 2;
+    // Body Water Mass (2 bytes) if bit 8
+    if ((flags & 0x100) != 0) offset += 2;
+    // Impedance (2 bytes) if bit 9
+    if ((flags & 0x200) != 0) offset += 2;
+
+    // Weight (2 bytes) if bit 10
+    double? weight;
+    if ((flags & 0x400) != 0 && offset + 1 < bytes.length) {
+      weight = byteData.getUint16(offset, Endian.little) / 200.0;
+      if (isImperial) weight *= 0.453592;
+    }
+
+    return BleMeasurementResult(
+      deviceType: BleDeviceType.weightScale,
+      weight: weight,
+    );
+  }
+
+  /// Parse Intermediate Cuff Pressure (UUID 0x2A36)
+  /// ส่ง realtime ระหว่างวัดความดัน — ค่า systolic = ความดัน cuff ปัจจุบัน
+  static double? parseIntermediateCuffPressure(List<int> data) {
+    if (data.length < 7) return null;
+    final bytes = Uint8List.fromList(data);
+    final byteData = ByteData.sublistView(bytes);
+    final flags = bytes[0];
+    final isKpa = (flags & 0x01) != 0;
+
+    double pressure = _parseSFloat(byteData, 1);
+    if (isKpa) pressure *= 7.50062;
+
+    // ค่า cuff pressure ต้องอยู่ในช่วงที่สมเหตุสมผล
+    if (pressure < 0 || pressure > 300) return null;
+    return pressure;
+  }
+
   /// Parse custom pulse oximeter data (Yuwell, BerryMed, etc.)
   /// Returns (spO2, pulseRate) if valid, null otherwise.
   static (double, double)? tryParseCustomPulseOximeter(List<int> data) {
