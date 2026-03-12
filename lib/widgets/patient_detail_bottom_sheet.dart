@@ -288,18 +288,71 @@ class _PatientDetailBottomSheetState extends State<PatientDetailBottomSheet>
   // ════════════════════════════════════════════════════════════════════
 
   Widget _buildHealthTab() {
+    final diseases = _splitToList(_data?.underlyingDisease);
+    final surgeries = _splitToList(_data?.surgeryHistory);
+    final familyHistories = _splitToList(_data?.familyHistory);
+    final otherAllergies = _splitToList(_data?.otherAllergy);
+    final foodAllergies = _splitToList(_data?.foodAllergy);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader('ประวัติสุขภาพ'),
+          _buildSectionHeader('โรคประจำตัว'),
           const SizedBox(height: 12),
-          _buildInfoCard([
-            _InfoRow('โรคประจำตัว', _data?.underlyingDisease ?? '-'),
-            _InfoRow('ประวัติการผ่าตัด', _data?.surgeryHistory ?? '-'),
-            _InfoRow('ประวัติครอบครัว', _data?.familyHistory ?? '-'),
-          ]),
+          if (diseases.isEmpty)
+            _buildHealthCard('ไม่มีโรคประจำตัว', Icons.check_circle_outline, AppTheme.statusGreen)
+          else
+            ...diseases.map((d) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildHealthCard(d, Icons.medical_services_outlined, AppTheme.primaryThemeApp),
+            )),
+
+          const SizedBox(height: 16),
+          _buildSectionHeader('ประวัติการผ่าตัด'),
+          const SizedBox(height: 12),
+          if (surgeries.isEmpty)
+            _buildHealthCard('ไม่มีประวัติการผ่าตัด', Icons.check_circle_outline, AppTheme.statusGreen)
+          else
+            ...surgeries.map((s) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildHealthCard(s, Icons.content_cut, Colors.orange),
+            )),
+
+          const SizedBox(height: 16),
+          _buildSectionHeader('ประวัติครอบครัว'),
+          const SizedBox(height: 12),
+          if (familyHistories.isEmpty)
+            _buildHealthCard('ไม่มีประวัติครอบครัว', Icons.check_circle_outline, AppTheme.statusGreen)
+          else
+            ...familyHistories.map((f) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildHealthCard(f, Icons.family_restroom, AppTheme.secondaryText62),
+            )),
+
+          const SizedBox(height: 16),
+          _buildSectionHeader('แพ้อื่นๆ'),
+          const SizedBox(height: 12),
+          if (otherAllergies.isEmpty)
+            _buildHealthCard('ไม่มีประวัติแพ้อื่นๆ', Icons.check_circle_outline, AppTheme.statusGreen)
+          else
+            ...otherAllergies.map((a) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildHealthCard(a, Icons.warning_amber_rounded, Colors.orange),
+            )),
+
+          const SizedBox(height: 16),
+          _buildSectionHeader('แพ้อาหาร'),
+          const SizedBox(height: 12),
+          if (foodAllergies.isEmpty)
+            _buildHealthCard('ไม่มีประวัติแพ้อาหาร', Icons.check_circle_outline, AppTheme.statusGreen)
+          else
+            ...foodAllergies.map((f) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _buildHealthCard(f, Icons.restaurant, AppTheme.errorColor),
+            )),
+
           const SizedBox(height: 20),
           _buildSectionHeader('พฤติกรรม'),
           const SizedBox(height: 12),
@@ -307,6 +360,35 @@ class _PatientDetailBottomSheetState extends State<PatientDetailBottomSheet>
             _InfoRow('การสูบบุหรี่', _data?.smokingStatus ?? '-'),
             _InfoRow('การดื่มแอลกอฮอล์', _data?.drinkingStatus ?? '-'),
           ]),
+        ],
+      ),
+    );
+  }
+
+  List<String> _splitToList(String? value) {
+    if (value == null || value == '-' || value.trim().isEmpty) return [];
+    return value.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+  }
+
+  Widget _buildHealthCard(String text, IconData icon, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.lineColorD9),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 22, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTheme.generalText(14, color: AppTheme.primaryText),
+            ),
+          ),
         ],
       ),
     );

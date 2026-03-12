@@ -257,6 +257,8 @@ class MockData {
       familyHistory: '-',
       smokingStatus: 'ไม่สูบ',
       drinkingStatus: 'ไม่ดื่ม',
+      otherAllergy: '-',
+      foodAllergy: '-',
       drugAllergies: [],
     ),
     '260225-003': PatientRegistration(
@@ -286,6 +288,8 @@ class MockData {
       familyHistory: 'บิดาเป็นเบาหวาน',
       smokingStatus: 'ไม่สูบ',
       drinkingStatus: 'ไม่ดื่ม',
+      otherAllergy: 'ฝุ่น, ละอองเกสรดอกไม้',
+      foodAllergy: 'อาหารทะเล',
       drugAllergies: [
         DrugAllergy(
           drugName: 'Aspirin',
