@@ -3,6 +3,7 @@ import '../app/theme.dart';
 import '../models/appointment.dart';
 import '../widgets/diagnosis_tab.dart';
 import '../widgets/measurement_tab.dart';
+import '../widgets/patient_detail_bottom_sheet.dart';
 import '../widgets/treatment_order_tab.dart';
 
 class AppointmentDetailPage extends StatefulWidget {
@@ -194,7 +195,15 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                     _ActionIconButton(
                       icon: Icons.info_outline,
                       label: 'รายละเอียด',
-                      onTap: () {},
+                      onTap: () {
+                        PatientDetailBottomSheet.show(
+                          context,
+                          patientHn: appt.patientHn,
+                          patientName: appt.patientName,
+                          patientNameEn: appt.patientNameEn,
+                          avatarUrl: appt.patientAvatarUrl,
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     _ActionIconButton(

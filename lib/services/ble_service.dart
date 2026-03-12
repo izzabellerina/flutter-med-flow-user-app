@@ -13,11 +13,21 @@ class BleServiceNotFoundException implements Exception {
   String toString() => message;
 }
 
+/// Exception เมื่ออุปกรณ์ตัดการเชื่อมต่อระหว่างวัดค่า
+class BleDeviceDisconnectedException implements Exception {
+  final String message;
+  BleDeviceDisconnectedException(this.message);
+  @override
+  String toString() => message;
+}
+
 class BleUuids {
   static final bloodPressureService =
       Guid('00001810-0000-1000-8000-00805f9b34fb');
   static final bloodPressureMeasurement =
       Guid('00002a35-0000-1000-8000-00805f9b34fb');
+  static final intermediateCuffPressure =
+      Guid('00002a36-0000-1000-8000-00805f9b34fb');
 
   static final weightScaleService =
       Guid('0000181d-0000-1000-8000-00805f9b34fb');
@@ -65,9 +75,12 @@ class BleService {
   BluetoothDevice? _connectedDevice;
   StreamSubscription<List<ScanResult>>? _scanSubscription;
   StreamSubscription<List<int>>? _notifySubscription;
+  StreamSubscription<List<int>>? _intermediateBpSub;
+  StreamSubscription<BluetoothConnectionState>? _connectionStateSub;
   final _scanResultsController =
       StreamController<List<BleDeviceInfo>>.broadcast();
   final List<BleDeviceInfo> _discoveredDevices = [];
+  bool _disposed = false;
 
   Stream<List<BleDeviceInfo>> get scanResults => _scanResultsController.stream;
   BluetoothDevice? get connectedDevice => _connectedDevice;
@@ -78,7 +91,7 @@ class BleService {
   Future<void> startScan(
       {Duration timeout = const Duration(seconds: 10)}) async {
     _discoveredDevices.clear();
-    _scanResultsController.add([]);
+    if (!_disposed) _scanResultsController.add([]);
 
     // ต้อง listen ก่อน startScan เพื่อไม่ให้พลาดผลลัพธ์
     _scanSubscription = FlutterBluePlus.onScanResults.listen((results) {
@@ -96,7 +109,9 @@ class BleService {
           _discoveredDevices.add(info);
         }
       }
-      _scanResultsController.add(List.from(_discoveredDevices));
+      if (!_disposed) {
+        _scanResultsController.add(List.from(_discoveredDevices));
+      }
     });
 
     // สแกนอุปกรณ์ BLE ทั้งหมด (ไม่ filter service UUID)
@@ -132,7 +147,10 @@ class BleService {
   }
 
   Future<BleMeasurementResult> readMeasurement(
-      BleDeviceType deviceType) async {
+      BleDeviceType deviceType, {
+      void Function(double cuffPressure)? onIntermediateBp,
+      void Function(double weight)? onIntermediateWeight,
+  }) async {
     if (_connectedDevice == null) {
       throw Exception('No device connected');
     }
@@ -184,26 +202,87 @@ class BleService {
 
     await characteristic.setNotifyValue(true);
 
-    // Custom devices (Yuwell) ส่งข้อมูลต่อเนื่อง — ต้องรวบรวมหลาย packets
+    // สำหรับเครื่องวัดความดัน: subscribe Intermediate Cuff Pressure (0x2A36)
+    // เพื่อแสดงค่า cuff pressure แบบ realtime ระหว่างวัด
+    if (deviceType == BleDeviceType.bloodPressure && onIntermediateBp != null) {
+      final intermChar = service.characteristics
+          .cast<BluetoothCharacteristic?>()
+          .firstWhere(
+            (c) => c!.characteristicUuid == BleUuids.intermediateCuffPressure,
+            orElse: () => null,
+          );
+      if (intermChar != null) {
+        try {
+          await intermChar.setNotifyValue(true);
+          _intermediateBpSub =
+              intermChar.onValueReceived.listen((value) {
+            final pressure =
+                BleGattParser.parseIntermediateCuffPressure(value);
+            if (pressure != null) {
+              dev.log('Intermediate cuff pressure: $pressure mmHg');
+              onIntermediateBp(pressure);
+            }
+          });
+        } catch (e) {
+          dev.log('Intermediate cuff pressure not available: $e');
+        }
+      }
+    }
+
+    // Custom devices ที่ส่งข้อมูลต่อเนื่อง — ต้องรวบรวมหลาย packets
     if (isCustom && deviceType == BleDeviceType.pulseOximeter) {
       return _readCustomPulseOximeter(characteristic);
     }
+    if (isCustom && deviceType == BleDeviceType.weightScale) {
+      return _readBodyCompositionScale(characteristic, onIntermediateWeight);
+    }
+
+    // ใช้ timeout นานขึ้นสำหรับเครื่องวัดความดัน (ต้องรอวัดเสร็จ)
+    final timeoutDuration = deviceType == BleDeviceType.bloodPressure
+        ? const Duration(seconds: 90)
+        : const Duration(seconds: 30);
 
     final completer = Completer<BleMeasurementResult>();
 
+    // ฟังสถานะ connection — ถ้า disconnect ให้ fail fast
+    _connectionStateSub?.cancel();
+    _connectionStateSub =
+        _connectedDevice!.connectionState.listen((state) {
+      if (state == BluetoothConnectionState.disconnected &&
+          !completer.isCompleted) {
+        dev.log('Device disconnected during measurement ($deviceType)');
+        completer.completeError(BleDeviceDisconnectedException(
+            'เครื่องตัดการเชื่อมต่อระหว่างวัดค่า'));
+      }
+    });
+
     _notifySubscription = characteristic.onValueReceived.listen((value) {
+      dev.log('BLE data received for $deviceType: $value (${value.length} bytes)');
       if (!completer.isCompleted) {
-        final result = _parseData(deviceType, value);
+        final BleMeasurementResult result;
+        if (isCustom && deviceType == BleDeviceType.weightScale) {
+          result = BleGattParser.parseBodyComposition(value);
+        } else {
+          result = _parseData(deviceType, value);
+        }
         completer.complete(result);
       }
     });
 
-    return completer.future.timeout(
-      const Duration(seconds: 30),
-      onTimeout: () {
-        throw TimeoutException('No measurement received within 30 seconds');
-      },
-    );
+    try {
+      return await completer.future.timeout(
+        timeoutDuration,
+        onTimeout: () {
+          throw TimeoutException(
+              'ไม่ได้รับค่าจากเครื่องภายใน ${timeoutDuration.inSeconds} วินาที');
+        },
+      );
+    } finally {
+      await _connectionStateSub?.cancel();
+      _connectionStateSub = null;
+      await _intermediateBpSub?.cancel();
+      _intermediateBpSub = null;
+    }
   }
 
   /// หา custom service/characteristic สำหรับอุปกรณ์ที่ไม่ใช้ standard GATT
@@ -216,6 +295,9 @@ class BleService {
         (Guid('ffe0'), Guid('ffe4')), // Yuwell BO-YX series
         (Guid('fff0'), Guid('fff3')), // บางรุ่น
       ],
+      BleDeviceType.weightScale: [
+        (Guid('181b'), Guid('2a9c')), // Body Composition Service
+      ],
     };
 
     final configs = customConfigs[deviceType];
@@ -224,9 +306,11 @@ class BleService {
     for (final (svcGuid, charGuid) in configs) {
       for (final svc in services) {
         if (svc.serviceUuid == svcGuid) {
-          // หา characteristic ที่มี notify
+          // หา characteristic ที่มี notify หรือ indicate
           final hasChar = svc.characteristics.any(
-            (c) => c.characteristicUuid == charGuid && c.properties.notify,
+            (c) =>
+                c.characteristicUuid == charGuid &&
+                (c.properties.notify || c.properties.indicate),
           );
           if (hasChar) return (svc, charGuid);
         }
@@ -283,6 +367,51 @@ class BleService {
     );
   }
 
+  /// อ่านค่าจาก Body Composition Scale (0x181B / 0x2A9C)
+  /// เครื่องส่งค่าต่อเนื่องระหว่างชั่ง — รอค่านิ่งก่อนส่งกลับ
+  Future<BleMeasurementResult> _readBodyCompositionScale(
+      BluetoothCharacteristic characteristic,
+      void Function(double weight)? onIntermediate) async {
+    final completer = Completer<BleMeasurementResult>();
+    int stableCount = 0;
+    double lastWeight = 0;
+    BleMeasurementResult? lastResult;
+
+    _notifySubscription = characteristic.onValueReceived.listen((value) {
+      if (completer.isCompleted) return;
+
+      final result = BleGattParser.parseBodyComposition(value);
+      final weight = result.weight;
+      if (weight == null || weight <= 0) return;
+
+      dev.log('Body composition weight: $weight kg (stable=$stableCount)');
+      onIntermediate?.call(weight);
+      lastResult = result;
+
+      // รอค่านิ่ง: ±0.3 kg ติดกัน 5 ครั้ง
+      if ((weight - lastWeight).abs() < 0.3) {
+        stableCount++;
+      } else {
+        stableCount = 1;
+      }
+      lastWeight = weight;
+
+      if (stableCount >= 5) {
+        completer.complete(result);
+      }
+    });
+
+    return completer.future.timeout(
+      const Duration(seconds: 60),
+      onTimeout: () {
+        if (lastResult != null && lastWeight > 0) {
+          return lastResult!;
+        }
+        throw TimeoutException('ไม่ได้รับค่าจากเครื่องภายใน 60 วินาที');
+      },
+    );
+  }
+
   static String _deviceTypeLabel(BleDeviceType type) {
     switch (type) {
       case BleDeviceType.bloodPressure:
@@ -310,6 +439,10 @@ class BleService {
   }
 
   Future<void> disconnect() async {
+    await _connectionStateSub?.cancel();
+    _connectionStateSub = null;
+    await _intermediateBpSub?.cancel();
+    _intermediateBpSub = null;
     await _notifySubscription?.cancel();
     _notifySubscription = null;
     await _connectedDevice?.disconnect();
@@ -317,6 +450,7 @@ class BleService {
   }
 
   void dispose() {
+    _disposed = true;
     stopScan();
     disconnect();
     _scanResultsController.close();
