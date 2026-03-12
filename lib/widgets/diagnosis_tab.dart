@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
+import '../data/mock_data.dart';
 import '../models/diagnosis.dart';
+import 'search_selector_field.dart';
 
 class DiagnosisTab extends StatefulWidget {
   const DiagnosisTab({super.key});
@@ -12,7 +14,7 @@ class DiagnosisTab extends StatefulWidget {
 class _DiagnosisTabState extends State<DiagnosisTab> {
   final _recordNoteController = TextEditingController();
   final _diagnosisNoteController = TextEditingController();
-  final _icd10Controller = TextEditingController();
+  SelectorItem? _selectedIcd10;
 
   final List<Diagnosis> _diagnoses = [
     // Mock history data (past days)
@@ -77,7 +79,11 @@ class _DiagnosisTabState extends State<DiagnosisTab> {
       _diagnoses.where((d) => !d.isToday).toList();
 
   void _addDiagnosis() {
-    if (_icd10Controller.text.isEmpty) return;
+    if (_selectedIcd10 == null) return;
+
+    final icd = MockData.icd10Codes
+        .where((c) => c['code'] == _selectedIcd10!.id)
+        .firstOrNull;
 
     setState(() {
       _diagnoses.insert(
@@ -86,11 +92,9 @@ class _DiagnosisTabState extends State<DiagnosisTab> {
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           recordNote: _recordNoteController.text,
           diagnosisType: 'Exam',
-          icd10: _icd10Controller.text,
-          icdDesc:
-              'Cholera due to Vibrio cholerae 01,biovar cholerae',
-          snTerm:
-              'Cholera due to Vibrio cholerae O1 Classical biotype (disorder)',
+          icd10: _selectedIcd10!.id,
+          icdDesc: icd?['desc'] ?? '',
+          snTerm: icd?['snTerm'] ?? '',
           diagnosisNote: _diagnosisNoteController.text,
           recorderName: 'ธนวัฒน์ แก้วพรหม',
           recordedAt: DateTime.now(),
@@ -98,7 +102,7 @@ class _DiagnosisTabState extends State<DiagnosisTab> {
       );
       _recordNoteController.clear();
       _diagnosisNoteController.clear();
-      _icd10Controller.clear();
+      _selectedIcd10 = null;
     });
   }
 
@@ -106,7 +110,6 @@ class _DiagnosisTabState extends State<DiagnosisTab> {
   void dispose() {
     _recordNoteController.dispose();
     _diagnosisNoteController.dispose();
-    _icd10Controller.dispose();
     super.dispose();
   }
 
@@ -156,9 +159,21 @@ class _DiagnosisTabState extends State<DiagnosisTab> {
           ),
           const SizedBox(height: 12),
 
-          _buildFormField(
+          SearchSelectorField(
             label: 'เลือก ICD10',
-            controller: _icd10Controller,
+            hint: 'ค้นหารหัส ICD10...',
+            selectedItem: _selectedIcd10,
+            items: MockData.icd10Codes
+                .map((c) => SelectorItem(
+                    id: c['code']!,
+                    title: c['code']!,
+                    subtitle: c['desc']))
+                .toList(),
+            onSelected: (item) {
+              setState(() {
+                _selectedIcd10 = item;
+              });
+            },
             width: MediaQuery.of(context).size.width * 0.45,
           ),
           const SizedBox(height: 16),
