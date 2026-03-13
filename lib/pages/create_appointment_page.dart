@@ -32,10 +32,41 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage>
   final _doctorSearchController = TextEditingController();
   String _doctorSearchQuery = '';
 
+  // ── Step 3 state ──
+  final Set<String> _selectedExams = {};
+  final _ccController = TextEditingController();
+  final _noteController = TextEditingController();
+
   final _stepLabels = const [
     'เลือกคนไข้',
     'เลือกแพทย์',
-    'ยืนยัน',
+    'ข้อมูลทั่วไป',
+  ];
+
+  static const _examItems = [
+    'BP, Tem', 'VA', 'RK(Tn)', 'RK(ARK)', 'Slit lamp exam', 'Dilate',
+    "Schirmer's test", 'Refraction', 'Ishihara test', 'Pachymeter',
+    'เช็ดตา', 'Pentacam', 'Corvis', 'OPDScan', 'Topolyser',
+    'Specular Micro', 'CTVF', 'Fundus Photo', 'Cirrus OCT',
+    'Spectral OCT', 'IOL Master', 'A-Scan', 'B-Scan', 'I&C',
+    'irrigate sac', 'Epilation', 'Remove Concretion', 'Remove FB',
+    'Remove FB w RustR Removal', 'Stitch Off',
+    'lid spa 1 ครั้ง', 'lid spa pack 5', 'lid spa pack 10',
+    'lid spa pack 20', 'YAG Cap', 'YAG PI', 'Argon', 'PRP',
+    'YagSutureLysis', 'YagVitreolysis', 'FFA', 'ICG', 'FFA+ICG',
+    'ECCE + Mono IOL', 'Phaco + Mono IOL',
+    'Phaco + Mono Toric IOL', 'Phaco + Bifocal IOL (EDOF)',
+    'Phaco + Bifocal Toric IOL (EDOF)', 'Phaco + Trifocal IOL',
+    'Phaco + Trifocal Toric IOL', 'FLAC', 'Pterygium Ex w graft',
+    'Pterygium Ex', 'PKP', 'DMEK', 'DSAEK',
+    'Trabeculectomy', 'Glaucoma Drainage Device', 'Xen Implantation',
+    'Combine PE + Trab', 'Combine PE + GDD',
+    'Goniosynechialysis', 'CD Drainage', 'Bleb Revision',
+    'Blepharoplasty', 'Blepharoplasty w lavator resection',
+    'Lavator Resection', 'PPV with Endolaser',
+    'Avastin Intravitreous', 'Vabysmo Intravitreous',
+    'Muscle surgery', 'NanoRelex', 'NanoLASIK', 'LASIK', 'PRK',
+    'ICL', 'Toric ICL',
   ];
 
   @override
@@ -93,6 +124,8 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage>
   void dispose() {
     _searchController.dispose();
     _doctorSearchController.dispose();
+    _ccController.dispose();
+    _noteController.dispose();
     _doctorTabController.dispose();
     super.dispose();
   }
@@ -116,20 +149,43 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage>
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Step indicator
-            _buildStepIndicator(),
-            Divider(height: 1, color: AppTheme.lineColorD9),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 700;
 
-            // Step content
-            Expanded(
-              child: _buildStepContent(),
-            ),
+            if (isWide) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Vertical step indicator on the left
+                  Container(
+                    width: 160,
+                    color: Colors.white,
+                    child: _buildVerticalStepIndicator(),
+                  ),
+                  VerticalDivider(width: 1, color: AppTheme.lineColorD9),
+                  // Content + bottom nav on the right
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(child: _buildStepContent()),
+                        _buildBottomNav(),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
 
-            // Bottom navigation
-            _buildBottomNav(),
-          ],
+            return Column(
+              children: [
+                _buildStepIndicator(),
+                Divider(height: 1, color: AppTheme.lineColorD9),
+                Expanded(child: _buildStepContent()),
+                _buildBottomNav(),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -232,6 +288,99 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage>
     );
   }
 
+  Widget _buildVerticalStepIndicator() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(_stepLabels.length * 2 - 1, (index) {
+          if (index.isOdd) {
+            final stepBefore = index ~/ 2;
+            final isCompleted = stepBefore < _currentStep;
+            return Container(
+              width: 2,
+              height: 32,
+              color: isCompleted
+                  ? AppTheme.primaryThemeApp
+                  : AppTheme.lineColorD9,
+            );
+          }
+
+          final stepIndex = index ~/ 2;
+          final isActive = stepIndex == _currentStep;
+          final isCompleted = stepIndex < _currentStep;
+
+          return _buildVerticalStepRow(
+            stepIndex: stepIndex,
+            label: _stepLabels[stepIndex],
+            isActive: isActive,
+            isCompleted: isCompleted,
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildVerticalStepRow({
+    required int stepIndex,
+    required String label,
+    required bool isActive,
+    required bool isCompleted,
+  }) {
+    final Color circleBg;
+    final Widget circleChild;
+
+    if (isCompleted) {
+      circleBg = AppTheme.primaryThemeApp;
+      circleChild = const Icon(Icons.check, size: 18, color: Colors.white);
+    } else if (isActive) {
+      circleBg = AppTheme.primaryThemeApp;
+      circleChild = Text(
+        '${stepIndex + 1}',
+        style: AppTheme.generalText(13,
+            fonWeight: FontWeight.bold, color: Colors.white),
+      );
+    } else {
+      circleBg = AppTheme.lineColorD9;
+      circleChild = Text(
+        '${stepIndex + 1}',
+        style: AppTheme.generalText(13,
+            fonWeight: FontWeight.bold, color: AppTheme.secondaryText62),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: circleBg,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: circleChild,
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            label,
+            style: AppTheme.generalText(
+              13,
+              fonWeight: isActive || isCompleted
+                  ? FontWeight.w600
+                  : FontWeight.normal,
+              color: isActive || isCompleted
+                  ? AppTheme.primaryThemeApp
+                  : AppTheme.secondaryText62,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // Step Content
   // ══════════════════════════════════════════════════════════════════════════
@@ -243,7 +392,7 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage>
       case 1:
         return _buildStep2DoctorSelection();
       case 2:
-        return _buildStep3Placeholder();
+        return _buildStep3GeneralInfo();
       default:
         return const SizedBox.shrink();
     }
@@ -1115,23 +1264,142 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage>
 
   // ── Step 3: Placeholder ───────────────────────────────────────────
 
-  Widget _buildStep3Placeholder() {
-    return Center(
+  Widget _buildStep3GeneralInfo() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_outline,
-              size: 48, color: AppTheme.secondaryText62),
+          // Exam checkboxes
+          Text(
+            'รายการตรวจ / หัตถการ',
+            style: AppTheme.generalText(16,
+                fonWeight: FontWeight.bold, color: AppTheme.primaryText),
+          ),
           const SizedBox(height: 12),
-          Text(
-            'ยืนยันการนัดหมาย',
-            style: AppTheme.generalText(16, color: AppTheme.secondaryText62),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _examItems.map((exam) {
+              final isChecked = _selectedExams.contains(exam);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isChecked) {
+                      _selectedExams.remove(exam);
+                    } else {
+                      _selectedExams.add(exam);
+                    }
+                  });
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isChecked
+                        ? AppTheme.primaryThemeApp.withValues(alpha: 0.1)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isChecked
+                          ? AppTheme.primaryThemeApp
+                          : AppTheme.lineColorD9,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isChecked
+                            ? Icons.check_box
+                            : Icons.check_box_outline_blank,
+                        size: 18,
+                        color: isChecked
+                            ? AppTheme.primaryThemeApp
+                            : AppTheme.secondaryText62,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        exam,
+                        style: AppTheme.generalText(
+                          13,
+                          color: isChecked
+                              ? AppTheme.primaryThemeApp
+                              : AppTheme.primaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-          const SizedBox(height: 4),
+
+          const SizedBox(height: 24),
+          Divider(color: AppTheme.lineColorD9),
+          const SizedBox(height: 16),
+
+          // CC field
           Text(
-            'พบกันในเร็วๆ นี้',
-            style: AppTheme.generalText(14, color: AppTheme.secondaryText62),
+            'CC (Chief Complaint)',
+            style: AppTheme.generalText(16,
+                fonWeight: FontWeight.bold, color: AppTheme.primaryText),
           ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _ccController,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: 'ระบุอาการสำคัญ...',
+              hintStyle:
+                  AppTheme.generalText(14, color: AppTheme.secondaryText62),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.lineColorD9),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.lineColorD9),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.primaryThemeApp),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Divider(color: AppTheme.lineColorD9),
+          const SizedBox(height: 16),
+
+          // Note field
+          Text(
+            'โน๊ต',
+            style: AppTheme.generalText(16,
+                fonWeight: FontWeight.bold, color: AppTheme.primaryText),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _noteController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'หมายเหตุเพิ่มเติม...',
+              hintStyle:
+                  AppTheme.generalText(14, color: AppTheme.secondaryText62),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.lineColorD9),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.lineColorD9),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.primaryThemeApp),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
