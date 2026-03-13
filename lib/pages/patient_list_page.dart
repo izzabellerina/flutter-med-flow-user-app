@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../data/mock_data.dart';
 import '../widgets/patient_card.dart';
+import 'patient_registration_page.dart';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -68,7 +69,14 @@ class _PatientListPageState extends State<PatientListPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PatientRegistrationPage(),
+            ),
+          );
+        },
         backgroundColor: AppTheme.primaryThemeApp,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add, size: 28),
