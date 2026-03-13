@@ -228,6 +228,117 @@ class MockData {
     {'code': 'Z01.0', 'desc': 'Examination of eyes and vision', 'snTerm': 'Eye examination (procedure)'},
   ];
 
+  /// แผนก (mock)
+  static final List<Map<String, String>> departments = [
+    {'id': 'DEP001', 'name': 'จักษุ'},
+    {'id': 'DEP002', 'name': 'อายุรกรรม'},
+    {'id': 'DEP003', 'name': 'ศัลยกรรม'},
+    {'id': 'DEP004', 'name': 'ออร์โธปิดิกส์'},
+    {'id': 'DEP005', 'name': 'สูติ-นรีเวช'},
+    {'id': 'DEP006', 'name': 'กุมารเวชกรรม'},
+  ];
+
+  /// วัตถุประสงค์การนัด (mock)
+  static const List<String> appointmentPurposes = [
+    'Work Up',
+    'Follow Up',
+    'Check Up',
+    'OR',
+  ];
+
+  /// แพทย์ (mock)
+  static final List<Map<String, dynamic>> doctors = [
+    {
+      'id': 'DOC001',
+      'name': 'พญ. ธนวัฒน์ แก้วพรหม',
+      'departmentId': 'DEP001',
+      'specialty': 'จักษุวิทยา',
+    },
+    {
+      'id': 'DOC002',
+      'name': 'นพ. สมชาย รักษ์ดี',
+      'departmentId': 'DEP001',
+      'specialty': 'จักษุวิทยา',
+    },
+    {
+      'id': 'DOC003',
+      'name': 'พญ. วรรณา สุขใจ',
+      'departmentId': 'DEP002',
+      'specialty': 'อายุรศาสตร์',
+    },
+    {
+      'id': 'DOC004',
+      'name': 'นพ. ประยุทธ์ มั่นคง',
+      'departmentId': 'DEP002',
+      'specialty': 'อายุรศาสตร์โรคหัวใจ',
+    },
+    {
+      'id': 'DOC005',
+      'name': 'นพ. วิชัย เก่งกาจ',
+      'departmentId': 'DEP003',
+      'specialty': 'ศัลยศาสตร์',
+    },
+    {
+      'id': 'DOC006',
+      'name': 'พญ. สุดา ใจดี',
+      'departmentId': 'DEP004',
+      'specialty': 'ออร์โธปิดิกส์',
+    },
+  ];
+
+  /// ตารางออกตรวจแพทย์ (mock) — key = doctorId
+  /// shifts: morning (กะเช้า 09:00-12:00), afternoon (กะบ่าย 13:00-16:00)
+  static final List<Map<String, dynamic>> doctorSchedules = [
+    {
+      'doctorId': 'DOC001',
+      'date': '2026-03-13',
+      'shifts': ['morning', 'afternoon'],
+      'purposes': ['Work Up', 'Follow Up'],
+    },
+    {
+      'doctorId': 'DOC002',
+      'date': '2026-03-13',
+      'shifts': ['morning'],
+      'purposes': ['Work Up', 'Check Up'],
+    },
+    {
+      'doctorId': 'DOC003',
+      'date': '2026-03-13',
+      'shifts': ['afternoon'],
+      'purposes': ['Follow Up'],
+    },
+    {
+      'doctorId': 'DOC001',
+      'date': '2026-03-14',
+      'shifts': ['morning'],
+      'purposes': ['OR'],
+    },
+    {
+      'doctorId': 'DOC004',
+      'date': '2026-03-14',
+      'shifts': ['morning', 'afternoon'],
+      'purposes': ['Work Up', 'Follow Up', 'Check Up'],
+    },
+    {
+      'doctorId': 'DOC005',
+      'date': '2026-03-14',
+      'shifts': ['afternoon'],
+      'purposes': ['OR'],
+    },
+    {
+      'doctorId': 'DOC002',
+      'date': '2026-03-15',
+      'shifts': ['morning', 'afternoon'],
+      'purposes': ['Work Up', 'Follow Up'],
+    },
+    {
+      'doctorId': 'DOC006',
+      'date': '2026-03-15',
+      'shifts': ['morning'],
+      'purposes': ['Check Up', 'Follow Up'],
+    },
+  ];
+
   /// ข้อมูลลงทะเบียนคนไข้ (mock) — key = patientHn
   static final Map<String, PatientRegistration> patientRegistrations = {
     '260306-002': PatientRegistration(

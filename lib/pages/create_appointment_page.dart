@@ -10,17 +10,44 @@ class CreateAppointmentPage extends StatefulWidget {
   State<CreateAppointmentPage> createState() => _CreateAppointmentPageState();
 }
 
-class _CreateAppointmentPageState extends State<CreateAppointmentPage> {
+class _CreateAppointmentPageState extends State<CreateAppointmentPage>
+    with SingleTickerProviderStateMixin {
   int _currentStep = 0;
   Patient? _selectedPatient;
   final _searchController = TextEditingController();
   List<Patient> _filteredPatients = MockData.patients;
 
+  // ── Step 2 state ──
+  DateTime _appointmentDate = DateTime.now();
+  late TabController _doctorTabController;
+  String? _selectedDepartmentId;
+  String _selectedPurpose = MockData.appointmentPurposes.first;
+  String? _selectedDoctorId;
+  String? _selectedShift;
+  // Step 2 tab "แพทย์นอกตาราง"
+  String? _offScheduleDepartmentId;
+  String? _offSchedulePurpose;
+  String? _offScheduleDoctorId;
+  TimeOfDay? _offScheduleTime;
+  final _doctorSearchController = TextEditingController();
+  String _doctorSearchQuery = '';
+
   final _stepLabels = const [
     'เลือกคนไข้',
-    'รายละเอียดนัด',
+    'เลือกแพทย์',
     'ยืนยัน',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _doctorTabController = TabController(length: 2, vsync: this);
+    _doctorTabController.addListener(() {
+      if (!_doctorTabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
+  }
 
   void _onSearch(String query) {
     setState(() {
@@ -54,9 +81,19 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage> {
     }
   }
 
+  bool get _canProceedStep2 {
+    if (_doctorTabController.index == 0) {
+      return _selectedDoctorId != null;
+    } else {
+      return _offScheduleDoctorId != null && _offScheduleTime != null;
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _doctorSearchController.dispose();
+    _doctorTabController.dispose();
     super.dispose();
   }
 
@@ -204,7 +241,7 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage> {
       case 0:
         return _buildStep1PatientSelection();
       case 1:
-        return _buildStep2Placeholder();
+        return _buildStep2DoctorSelection();
       case 2:
         return _buildStep3Placeholder();
       default:
@@ -392,28 +429,691 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage> {
     );
   }
 
-  // ── Step 2 & 3: Placeholder ─────────────────────────────────────────
+  // ── Step 2: เลือกแพทย์ ──────────────────────────────────────────────
 
-  Widget _buildStep2Placeholder() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.event_note, size: 48, color: AppTheme.secondaryText62),
-          const SizedBox(height: 12),
-          Text(
-            'รายละเอียดนัดหมาย',
-            style: AppTheme.generalText(16, color: AppTheme.secondaryText62),
+  Widget _buildStep2DoctorSelection() {
+    return Column(
+      children: [
+        // Calendar date picker
+        _buildCalendarSection(),
+        Divider(height: 1, color: AppTheme.lineColorD9),
+
+        // Tab bar: แพทย์ในตาราง / แพทย์นอกตาราง
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _doctorTabController,
+            labelColor: AppTheme.primaryThemeApp,
+            unselectedLabelColor: AppTheme.secondaryText62,
+            indicatorColor: AppTheme.primaryThemeApp,
+            labelStyle: AppTheme.generalText(14, fonWeight: FontWeight.w600),
+            unselectedLabelStyle: AppTheme.generalText(14),
+            tabs: const [
+              Tab(text: 'แพทย์ในตาราง'),
+              Tab(text: 'แพทย์นอกตาราง'),
+            ],
           ),
-          const SizedBox(height: 4),
+        ),
+        Divider(height: 1, color: AppTheme.lineColorD9),
+
+        // Tab content
+        Expanded(
+          child: TabBarView(
+            controller: _doctorTabController,
+            children: [
+              _buildInScheduleTab(),
+              _buildOffScheduleTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendarSection() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: InkWell(
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: _appointmentDate,
+            firstDate: DateTime.now(),
+            lastDate: DateTime.now().add(const Duration(days: 365)),
+          );
+          if (picked != null) {
+            setState(() {
+              _appointmentDate = picked;
+              // Reset doctor selection when date changes
+              _selectedDoctorId = null;
+              _selectedShift = null;
+              _offScheduleDoctorId = null;
+            });
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppTheme.lineColorD9),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today,
+                  color: AppTheme.primaryThemeApp, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _formatDate(_appointmentDate),
+                  style: AppTheme.generalText(
+                    15,
+                    fonWeight: FontWeight.w500,
+                    color: AppTheme.primaryText,
+                  ),
+                ),
+              ),
+              Icon(Icons.arrow_drop_down,
+                  color: AppTheme.secondaryText62, size: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน',
+      'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม',
+      'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+    ];
+    const days = [
+      'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี',
+      'ศุกร์', 'เสาร์', 'อาทิตย์',
+    ];
+    final dayName = days[date.weekday - 1];
+    final monthName = months[date.month - 1];
+    final buddhistYear = date.year + 543;
+    return 'วัน$dayName ที่ ${date.day} $monthName $buddhistYear';
+  }
+
+  String _formatDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // ── Tab 1: แพทย์ในตาราง ──────────────────────────────────────────
+
+  Widget _buildInScheduleTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Department selector
+          _buildDropdown(
+            label: 'แผนก',
+            value: _selectedDepartmentId,
+            items: MockData.departments.map((d) {
+              return DropdownMenuItem<String>(
+                value: d['id'],
+                child: Text(d['name']!),
+              );
+            }).toList(),
+            onChanged: (v) {
+              setState(() {
+                _selectedDepartmentId = v;
+                _selectedDoctorId = null;
+              _selectedShift = null;
+              });
+            },
+            hint: 'เลือกแผนก',
+          ),
+          const SizedBox(height: 16),
+
+          // Purpose segment buttons
           Text(
-            'พบกันในเร็วๆ นี้',
-            style: AppTheme.generalText(14, color: AppTheme.secondaryText62),
+            'วัตถุประสงค์',
+            style: AppTheme.generalText(14,
+                fonWeight: FontWeight.w600, color: AppTheme.primaryText),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: MockData.appointmentPurposes.map((purpose) {
+                final isActive = _selectedPurpose == purpose;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedPurpose = purpose;
+                        _selectedDoctorId = null;
+              _selectedShift = null;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? AppTheme.primaryThemeApp
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isActive
+                              ? AppTheme.primaryThemeApp
+                              : AppTheme.lineColorD9,
+                        ),
+                      ),
+                      child: Text(
+                        purpose,
+                        style: AppTheme.generalText(
+                          13,
+                          fonWeight:
+                              isActive ? FontWeight.w600 : FontWeight.normal,
+                          color: isActive
+                              ? Colors.white
+                              : AppTheme.primaryText,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Doctor list grouped by shift
+          _buildScheduledDoctorList(),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getScheduledDoctors() {
+    final dateKey = _formatDateKey(_appointmentDate);
+
+    // Find schedules matching date + purpose
+    final matchingSchedules = MockData.doctorSchedules.where((s) {
+      final matchesDate = s['date'] == dateKey;
+      final matchesPurpose =
+          (s['purposes'] as List<String>).contains(_selectedPurpose);
+      return matchesDate && matchesPurpose;
+    }).toList();
+
+    // Filter by department if selected
+    final result = <Map<String, dynamic>>[];
+    for (final schedule in matchingSchedules) {
+      final doctor = MockData.doctors.firstWhere(
+        (d) => d['id'] == schedule['doctorId'],
+        orElse: () => <String, dynamic>{},
+      );
+      if (doctor.isEmpty) {
+        continue;
+      }
+      if (_selectedDepartmentId != null &&
+          doctor['departmentId'] != _selectedDepartmentId) {
+        continue;
+      }
+
+      result.add({
+        ...doctor,
+        'shifts': schedule['shifts'],
+      });
+    }
+    return result;
+  }
+
+  Widget _buildScheduledDoctorList() {
+    final doctors = _getScheduledDoctors();
+
+    if (doctors.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Column(
+          children: [
+            Icon(Icons.person_off, size: 48, color: AppTheme.secondaryText62),
+            const SizedBox(height: 8),
+            Text(
+              'ไม่พบแพทย์ในตาราง',
+              style:
+                  AppTheme.generalText(14, color: AppTheme.secondaryText62),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Group doctors by shift
+    final morningDoctors =
+        doctors.where((d) => (d['shifts'] as List).contains('morning')).toList();
+    final afternoonDoctors = doctors
+        .where((d) => (d['shifts'] as List).contains('afternoon'))
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (morningDoctors.isNotEmpty) ...[
+          _buildShiftHeader('กะเช้า', '09:00 - 12:00'),
+          const SizedBox(height: 8),
+          ...morningDoctors.map((d) => _buildDoctorCard(
+                d,
+                shift: 'morning',
+              )),
+          const SizedBox(height: 16),
+        ],
+        if (afternoonDoctors.isNotEmpty) ...[
+          _buildShiftHeader('กะบ่าย', '13:00 - 16:00'),
+          const SizedBox(height: 8),
+          ...afternoonDoctors.map((d) => _buildDoctorCard(
+                d,
+                shift: 'afternoon',
+              )),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildShiftHeader(String shiftName, String timeRange) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryThemeApp.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.access_time,
+              size: 16, color: AppTheme.primaryThemeApp),
+          const SizedBox(width: 8),
+          Text(
+            shiftName,
+            style: AppTheme.generalText(14,
+                fonWeight: FontWeight.w600,
+                color: AppTheme.primaryThemeApp),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            timeRange,
+            style: AppTheme.generalText(13,
+                color: AppTheme.primaryThemeApp),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildDoctorCard(Map<String, dynamic> doctor, {String? shift}) {
+    final doctorId = doctor['id'] as String;
+    final isSelected = _selectedDoctorId == doctorId && _selectedShift == shift;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedDoctorId = doctorId;
+          _selectedShift = shift;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AppTheme.primaryThemeApp
+                : AppTheme.lineColorD9,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 22,
+              backgroundColor:
+                  AppTheme.primaryThemeApp.withValues(alpha: 0.1),
+              child: Icon(Icons.person, color: AppTheme.primaryThemeApp),
+            ),
+            const SizedBox(width: 12),
+
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doctor['name'] as String,
+                    style: AppTheme.generalText(15,
+                        fonWeight: FontWeight.w600,
+                        color: AppTheme.primaryText),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    doctor['specialty'] as String,
+                    style: AppTheme.generalText(12,
+                        color: AppTheme.secondaryText62),
+                  ),
+                ],
+              ),
+            ),
+
+            // Selection indicator
+            if (isSelected)
+              Icon(Icons.check_circle,
+                  color: AppTheme.primaryThemeApp, size: 24)
+            else
+              Icon(Icons.radio_button_unchecked,
+                  color: AppTheme.lineColorD9, size: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Tab 2: แพทย์นอกตาราง ──────────────────────────────────────────
+
+  Widget _buildOffScheduleTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Department selector
+          _buildDropdown(
+            label: 'แผนก',
+            value: _offScheduleDepartmentId,
+            items: MockData.departments.map((d) {
+              return DropdownMenuItem<String>(
+                value: d['id'],
+                child: Text(d['name']!),
+              );
+            }).toList(),
+            onChanged: (v) {
+              setState(() {
+                _offScheduleDepartmentId = v;
+                _offScheduleDoctorId = null;
+              });
+            },
+            hint: 'เลือกแผนก',
+          ),
+          const SizedBox(height: 16),
+
+          // Purpose selector
+          _buildDropdown(
+            label: 'วัตถุประสงค์',
+            value: _offSchedulePurpose,
+            items: MockData.appointmentPurposes.map((p) {
+              return DropdownMenuItem<String>(
+                value: p,
+                child: Text(p),
+              );
+            }).toList(),
+            onChanged: (v) {
+              setState(() {
+                _offSchedulePurpose = v;
+              });
+            },
+            hint: 'เลือกวัตถุประสงค์',
+          ),
+          const SizedBox(height: 16),
+
+          // Search doctor
+          Text(
+            'เลือกแพทย์',
+            style: AppTheme.generalText(14,
+                fonWeight: FontWeight.w600, color: AppTheme.primaryText),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _doctorSearchController,
+            onChanged: (v) => setState(() => _doctorSearchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'ค้นหาชื่อแพทย์',
+              hintStyle: AppTheme.generalText(14,
+                  color: AppTheme.secondaryText62),
+              prefixIcon:
+                  Icon(Icons.search, color: AppTheme.secondaryText62),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.lineColorD9),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.lineColorD9),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppTheme.primaryThemeApp),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildOffScheduleDoctorList(),
+
+          // Time picker (shown when doctor is selected)
+          if (_offScheduleDoctorId != null) ...[
+            const SizedBox(height: 20),
+            _buildTimePicker(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOffScheduleDoctorList() {
+    final doctors = MockData.doctors.where((d) {
+      if (_offScheduleDepartmentId != null &&
+          d['departmentId'] != _offScheduleDepartmentId) {
+        return false;
+      }
+      if (_doctorSearchQuery.isNotEmpty) {
+        final name = (d['name'] as String).toLowerCase();
+        if (!name.contains(_doctorSearchQuery.toLowerCase())) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    if (doctors.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Column(
+          children: [
+            Icon(Icons.person_off, size: 48, color: AppTheme.secondaryText62),
+            const SizedBox(height: 8),
+            Text(
+              'ไม่พบแพทย์',
+              style:
+                  AppTheme.generalText(14, color: AppTheme.secondaryText62),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: doctors.map((doctor) {
+        final doctorId = doctor['id'] as String;
+        final isSelected = _offScheduleDoctorId == doctorId;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _offScheduleDoctorId = doctorId;
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? AppTheme.primaryThemeApp
+                    : AppTheme.lineColorD9,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor:
+                      AppTheme.primaryThemeApp.withValues(alpha: 0.1),
+                  child:
+                      Icon(Icons.person, color: AppTheme.primaryThemeApp),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        doctor['name'] as String,
+                        style: AppTheme.generalText(15,
+                            fonWeight: FontWeight.w600,
+                            color: AppTheme.primaryText),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        doctor['specialty'] as String,
+                        style: AppTheme.generalText(12,
+                            color: AppTheme.secondaryText62),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  Icon(Icons.check_circle,
+                      color: AppTheme.primaryThemeApp, size: 24)
+                else
+                  Icon(Icons.radio_button_unchecked,
+                      color: AppTheme.lineColorD9, size: 24),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildTimePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'เวลานัดหมาย',
+          style: AppTheme.generalText(14,
+              fonWeight: FontWeight.w600, color: AppTheme.primaryText),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () async {
+            final picked = await showTimePicker(
+              context: context,
+              initialTime: _offScheduleTime ?? const TimeOfDay(hour: 9, minute: 0),
+            );
+            if (picked != null) {
+              setState(() {
+                _offScheduleTime = picked;
+              });
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppTheme.lineColorD9),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.access_time,
+                    color: AppTheme.primaryThemeApp, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  _offScheduleTime != null
+                      ? _offScheduleTime!.format(context)
+                      : 'เลือกเวลา',
+                  style: AppTheme.generalText(
+                    15,
+                    color: _offScheduleTime != null
+                        ? AppTheme.primaryText
+                        : AppTheme.secondaryText62,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Shared widgets ────────────────────────────────────────────────
+
+  Widget _buildDropdown({
+    required String label,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+    required String hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTheme.generalText(14,
+              fonWeight: FontWeight.w600, color: AppTheme.primaryText),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppTheme.lineColorD9),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              hint: Text(
+                hint,
+                style: AppTheme.generalText(14,
+                    color: AppTheme.secondaryText62),
+              ),
+              style: AppTheme.generalText(14, color: AppTheme.primaryText),
+              items: items,
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Step 3: Placeholder ───────────────────────────────────────────
 
   Widget _buildStep3Placeholder() {
     return Center(
@@ -444,7 +1144,17 @@ class _CreateAppointmentPageState extends State<CreateAppointmentPage> {
   Widget _buildBottomNav() {
     final isFirstStep = _currentStep == 0;
     final isLastStep = _currentStep == _stepLabels.length - 1;
-    final canProceed = _currentStep == 0 ? _selectedPatient != null : true;
+    bool canProceed;
+    switch (_currentStep) {
+      case 0:
+        canProceed = _selectedPatient != null;
+        break;
+      case 1:
+        canProceed = _canProceedStep2;
+        break;
+      default:
+        canProceed = true;
+    }
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
