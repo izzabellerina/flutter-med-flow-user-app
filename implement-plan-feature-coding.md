@@ -56,8 +56,21 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **UI**: Search bar, date picker, unregistered filter checkbox, appointment cards with doctor info
 - **Responsive**: Tablet landscape — search panel ซ้าย (350px), card list ขวา (>= 700px)
 - **Data**: Mock appointment data (4 appointments)
+- **FAB**: ปุ่ม + สำหรับสร้างนัดหมายใหม่ → push to CreateAppointmentPage
 
-### 5. Appointment Detail Page (รายละเอียดนัดหมาย) ✅
+### 5. Create Appointment Page (สร้างนัดหมายใหม่) 🚧
+- **Status**: In Progress (Step 1 done, Step 2-3 placeholder)
+- **File**: `lib/pages/create_appointment_page.dart`
+- **Description**: สร้างนัดหมายใหม่แบบ step-by-step (3 steps)
+- **UI**:
+  - Step indicator ด้านบน: วงกลมตัวเลข + เส้นเชื่อม (สีเปลี่ยนตาม state: completed/active/pending)
+  - Bottom nav: ปุ่ม "ย้อนกลับ" (outline) + "ถัดไป"/"ยืนยัน" (primary)
+  - **Step 1 (เลือกคนไข้)**: ช่องค้นหาชื่อ/HN, รายการคนไข้แบบการ์ด (avatar, ชื่อ, HN, อายุ), กดเลือกได้ 1 คน (radio-style), ต้องเลือกก่อนถึงกด "ถัดไป" ได้
+  - **Step 2 (รายละเอียดนัด)**: placeholder — รอ implement
+  - **Step 3 (ยืนยัน)**: placeholder — รอ implement
+- **Navigation**: กดจาก FAB ในหน้า AppointmentListPage → push to create page
+
+### 6. Appointment Detail Page (รายละเอียดนัดหมาย) ✅
 - **Status**: Implemented
 - **File**: `lib/pages/appointment_detail_page.dart`
 - **Description**: รายละเอียดการนัดหมาย เข้าถึงจากการกดที่ AppointmentCard
@@ -73,7 +86,7 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
 - **Navigation**: กดจาก AppointmentCard → push to detail page
 
-### 6. Patient Detail Page (รายละเอียดคนไข้) ✅
+### 7. Patient Detail Page (รายละเอียดคนไข้) ✅
 - **Status**: Implemented
 - **File**: `lib/pages/patient_detail_page.dart`
 - **Description**: รายละเอียดคนไข้ เข้าถึงจากการกดที่ PatientCard ในหน้ารายการคนไข้
@@ -88,13 +101,13 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **Navigation**: กดจาก PatientCard → push to detail page
 - **Data**: ดึงจาก MockData.patientRegistrations ตาม HN
 
-### 7. Profile Page (ข้อมูลส่วนตัว) ✅
+### 8. Profile Page (ข้อมูลส่วนตัว) ✅
 - **Status**: Implemented
 - **File**: `lib/pages/profile_page.dart`
 - **Description**: User profile display with logout button
 - **UI**: Centered avatar, doctor name, logout button
 
-### 8. Bottom Navigation ✅
+### 9. Bottom Navigation ✅
 - **Status**: Implemented
 - **File**: `lib/pages/main_page.dart`
 - **Tabs**: หน้าหลัก | คนไข้ | นัดหมาย | ผู้ใช้งาน
@@ -121,6 +134,7 @@ lib/
 │   ├── patient_list_page.dart
 │   ├── appointment_list_page.dart
 │   ├── patient_detail_page.dart
+│   ├── create_appointment_page.dart
 │   ├── appointment_detail_page.dart
 │   └── profile_page.dart
 ├── services/

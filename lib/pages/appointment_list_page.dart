@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../data/mock_data.dart';
 import '../widgets/appointment_card.dart';
+import 'create_appointment_page.dart';
 
 class AppointmentListPage extends StatefulWidget {
   const AppointmentListPage({super.key});
@@ -77,6 +78,19 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
             );
           },
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CreateAppointmentPage(),
+            ),
+          );
+        },
+        backgroundColor: AppTheme.primaryThemeApp,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add, size: 28),
       ),
     );
   }
