@@ -327,7 +327,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
               const ScreeningTab(),
               const MeasurementTab(),
               const DiagnosisTab(),
-              const TreatmentOrderTab(),
+              TreatmentOrderTab(patientHn: widget.appointment.patientHn),
             ],
           ),
         ),

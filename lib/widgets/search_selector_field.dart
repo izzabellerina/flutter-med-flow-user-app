@@ -19,6 +19,12 @@ class SearchSelectorField extends StatelessWidget {
   final ValueChanged<SelectorItem> onSelected;
   final double? width;
 
+  /// IDs ของ item ที่ถูก disable (เลือกไม่ได้)
+  final Set<String> disabledIds;
+
+  /// Badge text ที่แสดงหน้า item ที่ถูก disable
+  final String? disabledBadgeText;
+
   const SearchSelectorField({
     super.key,
     required this.label,
@@ -27,6 +33,8 @@ class SearchSelectorField extends StatelessWidget {
     required this.items,
     required this.onSelected,
     this.width,
+    this.disabledIds = const {},
+    this.disabledBadgeText,
   });
 
   @override
@@ -89,6 +97,8 @@ class SearchSelectorField extends StatelessWidget {
         title: label,
         items: items,
         selectedId: selectedItem?.id,
+        disabledIds: disabledIds,
+        disabledBadgeText: disabledBadgeText,
         onSelected: (item) {
           onSelected(item);
           Navigator.pop(context);
@@ -102,12 +112,16 @@ class _SearchSelectorSheet extends StatefulWidget {
   final String title;
   final List<SelectorItem> items;
   final String? selectedId;
+  final Set<String> disabledIds;
+  final String? disabledBadgeText;
   final ValueChanged<SelectorItem> onSelected;
 
   const _SearchSelectorSheet({
     required this.title,
     required this.items,
     this.selectedId,
+    this.disabledIds = const {},
+    this.disabledBadgeText,
     required this.onSelected,
   });
 
@@ -259,32 +273,65 @@ class _SearchSelectorSheetState extends State<_SearchSelectorSheet> {
                     itemBuilder: (context, index) {
                       final item = _filtered[index];
                       final isSelected = item.id == widget.selectedId;
+                      final isDisabled = widget.disabledIds.contains(item.id);
 
-                      return ListTile(
-                        onTap: () => widget.onSelected(item),
-                        selected: isSelected,
-                        selectedTileColor: AppTheme.dateBadgeColor,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16),
-                        title: Text(
-                          item.title,
-                          style: AppTheme.generalText(14,
-                              fonWeight: FontWeight.w500,
-                              color: AppTheme.primaryText),
+                      return Container(
+                        color: isDisabled
+                            ? const Color(0xFFFEE2E2)
+                            : isSelected
+                                ? AppTheme.dateBadgeColor
+                                : null,
+                        child: ListTile(
+                          onTap: isDisabled ? null : () => widget.onSelected(item),
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          title: Row(
+                            children: [
+                              if (isDisabled && widget.disabledBadgeText != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.errorColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    widget.disabledBadgeText!,
+                                    style: AppTheme.generalText(11,
+                                        fonWeight: FontWeight.w600,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  style: AppTheme.generalText(14,
+                                      fonWeight: FontWeight.w500,
+                                      color: isDisabled
+                                          ? AppTheme.errorColor
+                                          : AppTheme.primaryText),
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: item.subtitle != null
+                              ? Text(
+                                  item.subtitle!,
+                                  style: AppTheme.generalText(13,
+                                      color: isDisabled
+                                          ? AppTheme.errorColor.withValues(alpha: 0.6)
+                                          : AppTheme.secondaryText62),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : null,
+                          trailing: isSelected && !isDisabled
+                              ? Icon(Icons.check_circle,
+                                  color: AppTheme.primaryThemeApp, size: 22)
+                              : null,
                         ),
-                        subtitle: item.subtitle != null
-                            ? Text(
-                                item.subtitle!,
-                                style: AppTheme.generalText(13,
-                                    color: AppTheme.secondaryText62),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              )
-                            : null,
-                        trailing: isSelected
-                            ? Icon(Icons.check_circle,
-                                color: AppTheme.primaryThemeApp, size: 22)
-                            : null,
                       );
                     },
                   ),

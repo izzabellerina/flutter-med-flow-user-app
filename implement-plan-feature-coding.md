@@ -64,11 +64,12 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **UI**:
   - การ์ดคนไข้ด้านบน: avatar, ชื่อ TH/EN, วดป เกิด, badge HN
   - ปุ่ม "รายละเอียด" (info icon) + "Telemed" (phone icon)
-  - 4 แท็ป: ข้อมูลนัด | การวัด | วินิจฉัย | สั่งการรักษา
+  - 5 แท็ป: ข้อมูลนัด | คัดกรอง | การวัด | วินิจฉัย | สั่งการรักษา
   - แท็ป "ข้อมูลนัด": วันที่นัด (badge สีเขียว), สถานะ, เวลามา, การ์ดแพทย์ (badge เวลานัดสีฟ้า), โน้ต
+  - แท็ป "คัดกรอง": ฟอร์มกรอก CC, PI, PH, PE (2 คอลัมน์), ปุ่มเพิ่ม, รายการ "ปัจจุบัน" / "ย้อนหลัง", การ์ดแสดง CC/PI/PH/PE + ผู้บันทึก + วันเวลา, ปุ่มแก้ไข/ลบ
   - แท็ป "การวัด": ปุ่ม "อ่านค่าจากเครื่อง" (BLE), ฟอร์มกรอกค่า vital signs (Bw, Ht, BMI auto-calc, sBp, dBp, Pr, O2, Temp), ตารางข้อมูลแบ่ง "ปัจจุบัน" / "ย้อนหลัง", ปุ่มลบ
   - แท็ป "วินิจฉัย": ฟอร์มเพิ่มวินิจฉัย (บันทึกผลตรวจ, คำวินิจฉัย, เลือก ICD10), รายการ "วินิจฉัยปัจจุบัน" (วันนี้), รายการ "ย้อนหลัง" (วันก่อน), ปุ่มแก้ไข/ลบ
-  - แท็ป "สั่งการรักษา": ปุ่ม "+สั่งยา" / "+หัตถการ", ฟอร์ม inline ตามประเภท, การ์ดแสดงข้อมูล (badge สีตามประเภท, toggle ON/OFF, ปุ่มแก้ไข/ลบ), แบ่ง "ปัจจุบัน" / "ย้อนหลัง"
+  - แท็ป "สั่งการรักษา": การ์ดเตือนแพ้ยา (แสดงเมื่อคนไข้มีประวัติแพ้ยา, แสดงชื่อยา + อาการ + ระดับความรุนแรง), ปุ่ม "+สั่งยา" / "+หัตถการ", ฟอร์ม inline ตามประเภท (SearchSelector สำหรับชื่อยา/หัตถการ/วิธีใช้, ยาที่แพ้จะมี badge "แพ้ยานี้" สีแดง + กดเลือกไม่ได้), จำนวน + หน่วย + ราคาต่อหน่วย (ยา: แก้ไขจำนวนได้, หัตถการ: ล็อก 1 ครั้ง), การ์ดแสดงข้อมูล (badge สีตามประเภท, จำนวน, ราคา, ราคารวม, toggle ON/OFF, ปุ่มแก้ไข/ลบ), สรุปรายการ (จำนวน + ราคารวม ทั้งปัจจุบันและย้อนหลัง), ย้อนหลัง group ตามวัน
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
 - **Navigation**: กดจาก AppointmentCard → push to detail page
 
@@ -95,6 +96,7 @@ lib/
 │   ├── patient.dart
 │   ├── appointment.dart
 │   ├── diagnosis.dart
+│   ├── screening.dart
 │   ├── vital_sign.dart
 │   └── treatment_order.dart
 ├── pages/
@@ -113,8 +115,11 @@ lib/
 │   ├── patient_card.dart
 │   ├── appointment_card.dart
 │   ├── diagnosis_tab.dart
+│   ├── screening_tab.dart
 │   ├── measurement_tab.dart
 │   ├── treatment_order_tab.dart
+│   ├── search_selector_field.dart
+│   ├── patient_detail_bottom_sheet.dart
 │   └── ble_measurement_bottom_sheet.dart
 └── data/
     └── mock_data.dart
@@ -144,8 +149,13 @@ lib/
 - isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
 - calculateBmi(bw, ht) (static): คำนวณ BMI จาก น้ำหนัก/ส่วนสูง
 
+### Screening (`lib/models/screening.dart`)
+- id, cc, pi, ph, pe, recorderName, recordedAt
+- isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
+
 ### TreatmentOrder (`lib/models/treatment_order.dart`)
-- id, type (enum: medicine/procedure), name, usage?, isActive, recorderName, recordedAt
+- id, type (enum: medicine/procedure), name, usage?, quantity, unit, pricePerUnit, isActive, recorderName, recordedAt
+- totalPrice (computed): quantity * pricePerUnit
 - isToday (computed): ตรวจว่าเป็นข้อมูลวันนี้หรือไม่
 - copyWith(isActive): สร้าง copy พร้อมเปลี่ยน isActive
 
@@ -178,6 +188,8 @@ lib/
 - [ ] API integration (replace mock data)
 - [ ] Real Google Sign-In authentication
 - [ ] Patient detail page
+- [x] Appointment detail — แท็ปคัดกรอง (CC, PI, PH, PE)
+- [x] Treatment order — จำนวน + หน่วย + ราคา, สรุปรายการ, group ย้อนหลังตามวัน
 - [ ] Appointment detail — แท็ปการวัด sub-tabs: อาการ, โน้ตพยาบาล
 - [ ] Profile editing
 - [ ] Push notifications

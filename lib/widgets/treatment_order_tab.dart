@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../app/theme.dart';
 import '../data/mock_data.dart';
+import '../models/patient_registration.dart';
 import '../models/treatment_order.dart';
 import 'search_selector_field.dart';
 
 class TreatmentOrderTab extends StatefulWidget {
-  const TreatmentOrderTab({super.key});
+  final String? patientHn;
+
+  const TreatmentOrderTab({super.key, this.patientHn});
 
   @override
   State<TreatmentOrderTab> createState() => _TreatmentOrderTabState();
@@ -15,15 +19,46 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
   SelectorItem? _selectedMedicine;
   SelectorItem? _selectedProcedure;
   SelectorItem? _selectedUsage;
+  final _quantityController = TextEditingController(text: '1');
+
+  // ข้อมูลยาที่เลือก
+  String _selectedUnit = '';
+  double _selectedPricePerUnit = 0;
 
   // null = ไม่แสดงฟอร์ม, medicine/procedure = แสดงฟอร์มตามประเภท
   TreatmentType? _activeFormType;
+
+  /// ข้อมูลแพ้ยาของคนไข้
+  List<DrugAllergy> get _drugAllergies {
+    if (widget.patientHn == null) return [];
+    final reg = MockData.patientRegistrations[widget.patientHn];
+    return reg?.drugAllergies ?? [];
+  }
+
+  /// IDs ของยาที่คนไข้แพ้ (match ชื่อยาจาก mock data)
+  Set<String> get _allergicMedicineIds {
+    final allergies = _drugAllergies;
+    if (allergies.isEmpty) return {};
+    final ids = <String>{};
+    for (final allergy in allergies) {
+      final allergyName = allergy.drugName.toLowerCase();
+      for (final med in MockData.medicines) {
+        if ((med['name'] as String).toLowerCase().contains(allergyName)) {
+          ids.add(med['id'] as String);
+        }
+      }
+    }
+    return ids;
+  }
 
   final List<TreatmentOrder> _orders = [
     TreatmentOrder(
       id: '1',
       type: TreatmentType.procedure,
       name: 'Xen Implantation/OS',
+      quantity: 1,
+      unit: 'ครั้ง',
+      pricePerUnit: 25000,
       isActive: true,
       recorderName: 'พญ. ธนวัฒน์ แก้วพรหม',
       recordedAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -33,6 +68,9 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
       type: TreatmentType.medicine,
       name: 'Dexamethasone 0.025% in BSS Eye Drops 16 mL',
       usage: 'ตามคำสั่งแพทย์',
+      quantity: 2,
+      unit: 'ขวด',
+      pricePerUnit: 350,
       isActive: true,
       recorderName: 'พญ. ธนวัฒน์ แก้วพรหม',
       recordedAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -42,7 +80,22 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
       type: TreatmentType.medicine,
       name: 'Paracetamol 500 mg',
       usage: 'รับประทานครั้งละ 1-2 เม็ด ทุก 4-6 ชั่วโมง เมื่อมีอาการปวด',
+      quantity: 30,
+      unit: 'เม็ด',
+      pricePerUnit: 2,
       isActive: false,
+      recorderName: 'พญ. ธนวัฒน์ แก้วพรหม',
+      recordedAt: DateTime.now().subtract(const Duration(days: 7)),
+    ),
+    TreatmentOrder(
+      id: '4',
+      type: TreatmentType.medicine,
+      name: 'Ibuprofen 400 mg',
+      usage: 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร',
+      quantity: 21,
+      unit: 'เม็ด',
+      pricePerUnit: 5,
+      isActive: true,
       recorderName: 'พญ. ธนวัฒน์ แก้วพรหม',
       recordedAt: DateTime.now().subtract(const Duration(days: 7)),
     ),
@@ -54,6 +107,21 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
   List<TreatmentOrder> get _historyOrders =>
       _orders.where((o) => !o.isToday).toList();
 
+  /// Group history orders by date string
+  Map<String, List<TreatmentOrder>> get _groupedHistory {
+    final history = _historyOrders;
+    final map = <String, List<TreatmentOrder>>{};
+    for (final order in history) {
+      final key = _formatDateKey(order.recordedAt);
+      map.putIfAbsent(key, () => []).add(order);
+    }
+    return map;
+  }
+
+  String _formatDateKey(DateTime dt) {
+    return '${dt.day} ${_thaiMonth(dt.month)} ${dt.year + 543}';
+  }
+
   SelectorItem? get _activeSelectedItem =>
       _activeFormType == TreatmentType.medicine
           ? _selectedMedicine
@@ -62,6 +130,8 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
   void _addOrder() {
     final selected = _activeSelectedItem;
     if (selected == null) return;
+
+    final qty = int.tryParse(_quantityController.text) ?? 1;
 
     setState(() {
       _orders.insert(
@@ -73,6 +143,9 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
           usage: _activeFormType == TreatmentType.medicine
               ? _selectedUsage?.title
               : null,
+          quantity: qty,
+          unit: _selectedUnit,
+          pricePerUnit: _selectedPricePerUnit,
           recorderName: 'พญ. ธนวัฒน์ แก้วพรหม',
           recordedAt: DateTime.now(),
         ),
@@ -80,6 +153,9 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
       _selectedMedicine = null;
       _selectedProcedure = null;
       _selectedUsage = null;
+      _quantityController.text = '1';
+      _selectedUnit = '';
+      _selectedPricePerUnit = 0;
       _activeFormType = null;
     });
   }
@@ -95,19 +171,28 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
 
   @override
   void dispose() {
+    _quantityController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final current = _currentOrders;
-    final history = _historyOrders;
+    final groupedHistory = _groupedHistory;
+
+    final allergies = _drugAllergies;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // แพ้ยา warning card
+          if (allergies.isNotEmpty) ...[
+            _buildAllergyWarningCard(allergies),
+            const SizedBox(height: 16),
+          ],
+
           // ปุ่ม +สั่งยา / +หัตถการ
           Row(
             children: [
@@ -154,12 +239,15 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
                 ),
               ),
             )
-          else
+          else ...[
             ...current.map((o) => _buildOrderCard(o)),
+            const SizedBox(height: 8),
+            _buildSummary(current),
+          ],
 
           const SizedBox(height: 24),
 
-          // ย้อนหลัง (History)
+          // ย้อนหลัง (History) — grouped by date
           Text(
             'ย้อนหลัง',
             style: AppTheme.generalText(
@@ -170,7 +258,7 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
           ),
           const SizedBox(height: 12),
 
-          if (history.isEmpty)
+          if (groupedHistory.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
@@ -181,8 +269,97 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
                 ),
               ),
             )
-          else
-            ...history.map((o) => _buildOrderCard(o)),
+          else ...[
+            ...groupedHistory.entries.map((entry) => _buildDateGroup(
+                  entry.key,
+                  entry.value,
+                )),
+            const SizedBox(height: 8),
+            _buildSummary(_historyOrders),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllergyWarningCard(List<DrugAllergy> allergies) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 20, color: AppTheme.errorColor),
+              const SizedBox(width: 8),
+              Text(
+                'ประวัติแพ้ยา',
+                style: AppTheme.generalText(
+                  15,
+                  fonWeight: FontWeight.bold,
+                  color: AppTheme.errorColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...allergies.map((a) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: AppTheme.generalText(13, color: AppTheme.primaryText),
+                          children: [
+                            TextSpan(
+                              text: a.drugName,
+                              style: AppTheme.generalText(13,
+                                  fonWeight: FontWeight.w600,
+                                  color: AppTheme.primaryText),
+                            ),
+                            if (a.reaction != null && a.reaction!.isNotEmpty)
+                              TextSpan(text: ' — ${a.reaction}'),
+                            if (a.severity != null) ...[
+                              const TextSpan(text: ' ('),
+                              TextSpan(
+                                text: a.severity == 'severe'
+                                    ? 'รุนแรง'
+                                    : a.severity == 'moderate'
+                                        ? 'ปานกลาง'
+                                        : 'เล็กน้อย',
+                                style: AppTheme.generalText(13,
+                                    fonWeight: FontWeight.w600,
+                                    color: a.severity == 'severe'
+                                        ? AppTheme.errorColor
+                                        : const Color(0xFFD97706)),
+                              ),
+                              const TextSpan(text: ')'),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
         ],
       ),
     );
@@ -204,6 +381,9 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
             _selectedMedicine = null;
             _selectedProcedure = null;
             _selectedUsage = null;
+            _quantityController.text = '1';
+            _selectedUnit = '';
+            _selectedPricePerUnit = 0;
           }
         });
       },
@@ -262,32 +442,47 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
             items: isMedicine
                 ? MockData.medicines
                     .map((m) => SelectorItem(
-                        id: m['id']!, title: m['name']!))
+                        id: m['id'] as String, title: m['name'] as String))
                     .toList()
                 : MockData.procedures
                     .map((p) => SelectorItem(
-                        id: p['id']!, title: p['name']!))
+                        id: p['id'] as String, title: p['name'] as String))
                     .toList(),
+            disabledIds: isMedicine ? _allergicMedicineIds : const {},
+            disabledBadgeText: 'แพ้ยานี้',
             onSelected: (item) {
               setState(() {
                 if (isMedicine) {
                   _selectedMedicine = item;
-                  // autofill usage from medicine's default usage
+                  // autofill usage + unit + price from medicine data
                   final med = MockData.medicines
                       .where((m) => m['id'] == item.id)
                       .firstOrNull;
-                  if (med != null && med['usage'] != null) {
-                    final usageText = med['usage']!;
-                    final match = MockData.medicineUsages
-                        .where((u) => u['name'] == usageText)
-                        .firstOrNull;
-                    if (match != null) {
-                      _selectedUsage = SelectorItem(
-                          id: match['id']!, title: match['name']!);
+                  if (med != null) {
+                    _selectedUnit = med['unit'] as String;
+                    _selectedPricePerUnit = (med['pricePerUnit'] as num).toDouble();
+                    final usageText = med['usage'] as String?;
+                    if (usageText != null) {
+                      final match = MockData.medicineUsages
+                          .where((u) => u['name'] == usageText)
+                          .firstOrNull;
+                      if (match != null) {
+                        _selectedUsage = SelectorItem(
+                            id: match['id']!, title: match['name']!);
+                      }
                     }
                   }
                 } else {
                   _selectedProcedure = item;
+                  // procedure: locked qty=1, unit=ครั้ง
+                  final proc = MockData.procedures
+                      .where((p) => p['id'] == item.id)
+                      .firstOrNull;
+                  if (proc != null) {
+                    _selectedUnit = 'ครั้ง';
+                    _selectedPricePerUnit = (proc['pricePerUnit'] as num).toDouble();
+                  }
+                  _quantityController.text = '1';
                 }
               });
             },
@@ -310,6 +505,94 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
               },
             ),
           ],
+
+          const SizedBox(height: 12),
+
+          // จำนวน + หน่วย + ราคา
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // จำนวน
+              SizedBox(
+                width: 100,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'จำนวน',
+                      style: AppTheme.generalText(
+                        14,
+                        fonWeight: FontWeight.w600,
+                        color: AppTheme.primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _quantityController,
+                      keyboardType: TextInputType.number,
+                      readOnly: !isMedicine, // procedure locked to 1
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: AppTheme.lineColorD9),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: AppTheme.lineColorD9),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // หน่วย
+              if (_selectedUnit.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Text(
+                    _selectedUnit,
+                    style: AppTheme.generalText(
+                      14,
+                      color: AppTheme.secondaryText62,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 16),
+              // ราคาต่อหน่วย
+              if (_selectedPricePerUnit > 0)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ราคา/หน่วย: ${_formatPrice(_selectedPricePerUnit)} ฿',
+                          style: AppTheme.generalText(
+                            13,
+                            color: AppTheme.secondaryText62,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'รวม: ${_formatPrice(_selectedPricePerUnit * (int.tryParse(_quantityController.text) ?? 1))} ฿',
+                          style: AppTheme.generalText(
+                            14,
+                            fonWeight: FontWeight.w600,
+                            color: AppTheme.primaryThemeApp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
 
           const SizedBox(height: 16),
 
@@ -338,6 +621,77 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
           ),
         ],
       ),
+    );
+  }
+
+  /// สรุปรายการปัจจุบัน
+  Widget _buildSummary(List<TreatmentOrder> orders) {
+    final totalPrice = orders.fold<double>(0, (sum, o) => sum + o.totalPrice);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryThemeApp.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.primaryThemeApp.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'รวม ${orders.length} รายการ',
+            style: AppTheme.generalText(
+              14,
+              fonWeight: FontWeight.w600,
+              color: AppTheme.primaryText,
+            ),
+          ),
+          Text(
+            'ราคารวม: ${_formatPrice(totalPrice)} ฿',
+            style: AppTheme.generalText(
+              15,
+              fonWeight: FontWeight.bold,
+              color: AppTheme.primaryThemeApp,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Date group header + cards for history
+  Widget _buildDateGroup(String dateLabel, List<TreatmentOrder> orders) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.calendar_today, size: 14, color: AppTheme.secondaryText62),
+              const SizedBox(width: 6),
+              Text(
+                dateLabel,
+                style: AppTheme.generalText(
+                  13,
+                  fonWeight: FontWeight.w600,
+                  color: AppTheme.secondaryText62,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...orders.map((o) => _buildOrderCard(o)),
+        _buildSummary(orders),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -450,6 +804,38 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
             _buildInfoLine('วิธีใช้ :', order.usage!),
           ],
 
+          // จำนวน + ราคา
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'จำนวน: ${order.quantity} ${order.unit}',
+                style: AppTheme.generalText(
+                  13,
+                  fonWeight: FontWeight.w500,
+                  color: AppTheme.primaryText,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'ราคา/หน่วย: ${_formatPrice(order.pricePerUnit)} ฿',
+                style: AppTheme.generalText(
+                  13,
+                  color: AppTheme.secondaryText62,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'รวม ${_formatPrice(order.totalPrice)} ฿',
+                style: AppTheme.generalText(
+                  14,
+                  fonWeight: FontWeight.w600,
+                  color: AppTheme.primaryThemeApp,
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 12),
 
           // Footer: recorder + date
@@ -508,6 +894,15 @@ class _TreatmentOrderTabState extends State<TreatmentOrderTab> {
         ),
       ],
     );
+  }
+
+  String _formatPrice(double price) {
+    if (price == price.roundToDouble()) {
+      return price.toInt().toString().replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    }
+    return price.toStringAsFixed(2).replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
   }
 
   String _thaiMonth(int month) {

@@ -153,22 +153,22 @@ class MockData {
   };
 
   /// รายการยา (mock)
-  static final List<Map<String, String>> medicines = [
-    {'id': 'MED001', 'name': 'Paracetamol 500 mg', 'usage': 'รับประทานครั้งละ 1-2 เม็ด ทุก 4-6 ชั่วโมง เมื่อมีอาการปวด'},
-    {'id': 'MED002', 'name': 'Ibuprofen 400 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
-    {'id': 'MED003', 'name': 'Amoxicillin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
-    {'id': 'MED004', 'name': 'Dexamethasone 0.025% in BSS Eye Drops 16 mL', 'usage': 'ตามคำสั่งแพทย์'},
-    {'id': 'MED005', 'name': 'Metformin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง หลังอาหาร'},
-    {'id': 'MED006', 'name': 'Amlodipine 5 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง'},
-    {'id': 'MED007', 'name': 'Omeprazole 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนอาหารเช้า'},
-    {'id': 'MED008', 'name': 'Atorvastatin 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
-    {'id': 'MED009', 'name': 'Losartan 50 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง'},
-    {'id': 'MED010', 'name': 'Aspirin 81 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง หลังอาหาร'},
-    {'id': 'MED011', 'name': 'Ciprofloxacin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง'},
-    {'id': 'MED012', 'name': 'Prednisolone 5 mg', 'usage': 'ตามคำสั่งแพทย์'},
-    {'id': 'MED013', 'name': 'Diclofenac 25 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร'},
-    {'id': 'MED014', 'name': 'Cetirizine 10 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
-    {'id': 'MED015', 'name': 'Simvastatin 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน'},
+  static final List<Map<String, dynamic>> medicines = [
+    {'id': 'MED001', 'name': 'Paracetamol 500 mg', 'usage': 'รับประทานครั้งละ 1-2 เม็ด ทุก 4-6 ชั่วโมง เมื่อมีอาการปวด', 'unit': 'เม็ด', 'pricePerUnit': 2.0},
+    {'id': 'MED002', 'name': 'Ibuprofen 400 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร', 'unit': 'เม็ด', 'pricePerUnit': 5.0},
+    {'id': 'MED003', 'name': 'Amoxicillin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร', 'unit': 'แคปซูล', 'pricePerUnit': 8.0},
+    {'id': 'MED004', 'name': 'Dexamethasone 0.025% in BSS Eye Drops 16 mL', 'usage': 'ตามคำสั่งแพทย์', 'unit': 'ขวด', 'pricePerUnit': 350.0},
+    {'id': 'MED005', 'name': 'Metformin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง หลังอาหาร', 'unit': 'เม็ด', 'pricePerUnit': 3.0},
+    {'id': 'MED006', 'name': 'Amlodipine 5 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง', 'unit': 'เม็ด', 'pricePerUnit': 6.0},
+    {'id': 'MED007', 'name': 'Omeprazole 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนอาหารเช้า', 'unit': 'แคปซูล', 'pricePerUnit': 12.0},
+    {'id': 'MED008', 'name': 'Atorvastatin 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน', 'unit': 'เม็ด', 'pricePerUnit': 15.0},
+    {'id': 'MED009', 'name': 'Losartan 50 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง', 'unit': 'เม็ด', 'pricePerUnit': 10.0},
+    {'id': 'MED010', 'name': 'Aspirin 81 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง หลังอาหาร', 'unit': 'เม็ด', 'pricePerUnit': 1.5},
+    {'id': 'MED011', 'name': 'Ciprofloxacin 500 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง', 'unit': 'เม็ด', 'pricePerUnit': 18.0},
+    {'id': 'MED012', 'name': 'Prednisolone 5 mg', 'usage': 'ตามคำสั่งแพทย์', 'unit': 'เม็ด', 'pricePerUnit': 4.0},
+    {'id': 'MED013', 'name': 'Diclofenac 25 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร', 'unit': 'เม็ด', 'pricePerUnit': 3.5},
+    {'id': 'MED014', 'name': 'Cetirizine 10 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน', 'unit': 'เม็ด', 'pricePerUnit': 5.0},
+    {'id': 'MED015', 'name': 'Simvastatin 20 mg', 'usage': 'รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง ก่อนนอน', 'unit': 'เม็ด', 'pricePerUnit': 8.0},
   ];
 
   /// วิธีใช้ยา (mock)
@@ -191,17 +191,17 @@ class MockData {
   ];
 
   /// รายการหัตถการ (mock)
-  static final List<Map<String, String>> procedures = [
-    {'id': 'PRC001', 'name': 'Xen Implantation/OS'},
-    {'id': 'PRC002', 'name': 'Phacoemulsification with IOL implantation'},
-    {'id': 'PRC003', 'name': 'Trabeculectomy'},
-    {'id': 'PRC004', 'name': 'Intravitreal Injection'},
-    {'id': 'PRC005', 'name': 'YAG Laser Capsulotomy'},
-    {'id': 'PRC006', 'name': 'Selective Laser Trabeculoplasty (SLT)'},
-    {'id': 'PRC007', 'name': 'Pterygium Excision with Graft'},
-    {'id': 'PRC008', 'name': 'Chalazion Incision & Curettage'},
-    {'id': 'PRC009', 'name': 'Fundus Fluorescein Angiography (FFA)'},
-    {'id': 'PRC010', 'name': 'Retinal Laser Photocoagulation'},
+  static final List<Map<String, dynamic>> procedures = [
+    {'id': 'PRC001', 'name': 'Xen Implantation/OS', 'pricePerUnit': 25000.0},
+    {'id': 'PRC002', 'name': 'Phacoemulsification with IOL implantation', 'pricePerUnit': 35000.0},
+    {'id': 'PRC003', 'name': 'Trabeculectomy', 'pricePerUnit': 20000.0},
+    {'id': 'PRC004', 'name': 'Intravitreal Injection', 'pricePerUnit': 15000.0},
+    {'id': 'PRC005', 'name': 'YAG Laser Capsulotomy', 'pricePerUnit': 5000.0},
+    {'id': 'PRC006', 'name': 'Selective Laser Trabeculoplasty (SLT)', 'pricePerUnit': 8000.0},
+    {'id': 'PRC007', 'name': 'Pterygium Excision with Graft', 'pricePerUnit': 12000.0},
+    {'id': 'PRC008', 'name': 'Chalazion Incision & Curettage', 'pricePerUnit': 3000.0},
+    {'id': 'PRC009', 'name': 'Fundus Fluorescein Angiography (FFA)', 'pricePerUnit': 4500.0},
+    {'id': 'PRC010', 'name': 'Retinal Laser Photocoagulation', 'pricePerUnit': 10000.0},
   ];
 
   /// รายการ ICD-10 (mock)
