@@ -73,13 +73,28 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
 - **Navigation**: กดจาก AppointmentCard → push to detail page
 
-### 6. Profile Page (ข้อมูลส่วนตัว) ✅
+### 6. Patient Detail Page (รายละเอียดคนไข้) ✅
+- **Status**: Implemented
+- **File**: `lib/pages/patient_detail_page.dart`
+- **Description**: รายละเอียดคนไข้ เข้าถึงจากการกดที่ PatientCard ในหน้ารายการคนไข้
+- **UI**:
+  - การ์ดคนไข้ด้านบน: avatar (initials สีตามเพศ), ชื่อ TH/EN, badge HN, เบอร์โทร, อายุ, ไอคอนเพศ
+  - 4 แท็ป: สำคัญ | ส่วนตัว | สุขภาพ | แพ้ยา
+  - แท็ป "สำคัญ": ข้อมูลตามบัตรประชาชน (HN, เลขบัตร, เพศ, กรุ๊ปเลือด, วันเกิด ฯลฯ), ช่องทางติดต่อ, ที่อยู่ปัจจุบัน
+  - แท็ป "ส่วนตัว": สถานภาพ, อาชีพ, สถานที่ทำงาน, ผู้ติดต่อฉุกเฉิน
+  - แท็ป "สุขภาพ": โรคประจำตัว, ประวัติผ่าตัด, ประวัติครอบครัว, แพ้อื่นๆ, แพ้อาหาร, พฤติกรรม (แต่ละรายการเป็นการ์ดแยก)
+  - แท็ป "แพ้ยา": การ์ดแสดงยาที่แพ้ + อาการ + ระดับความรุนแรง (badge สี)
+- **Responsive**: Tablet landscape — การ์ดคนไข้ซ้าย (380px), แท็ปขวา (>= 700px)
+- **Navigation**: กดจาก PatientCard → push to detail page
+- **Data**: ดึงจาก MockData.patientRegistrations ตาม HN
+
+### 7. Profile Page (ข้อมูลส่วนตัว) ✅
 - **Status**: Implemented
 - **File**: `lib/pages/profile_page.dart`
 - **Description**: User profile display with logout button
 - **UI**: Centered avatar, doctor name, logout button
 
-### 7. Bottom Navigation ✅
+### 8. Bottom Navigation ✅
 - **Status**: Implemented
 - **File**: `lib/pages/main_page.dart`
 - **Tabs**: หน้าหลัก | คนไข้ | นัดหมาย | ผู้ใช้งาน
@@ -105,6 +120,7 @@ lib/
 │   ├── home_page.dart
 │   ├── patient_list_page.dart
 │   ├── appointment_list_page.dart
+│   ├── patient_detail_page.dart
 │   ├── appointment_detail_page.dart
 │   └── profile_page.dart
 ├── services/
@@ -187,7 +203,7 @@ lib/
 ## Pending / Future Features
 - [ ] API integration (replace mock data)
 - [ ] Real Google Sign-In authentication
-- [ ] Patient detail page
+- [x] Patient detail page — กดจาก PatientCard → push to detail page, 4 แท็ป (สำคัญ/ส่วนตัว/สุขภาพ/แพ้ยา)
 - [x] Appointment detail — แท็ปคัดกรอง (CC, PI, PH, PE)
 - [x] Treatment order — จำนวน + หน่วย + ราคา, สรุปรายการ, group ย้อนหลังตามวัน
 - [ ] Appointment detail — แท็ปการวัด sub-tabs: อาการ, โน้ตพยาบาล

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../models/patient.dart';
+import '../pages/patient_detail_page.dart';
 
 class PatientCard extends StatelessWidget {
   final Patient patient;
@@ -15,9 +16,19 @@ class PatientCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PatientDetailPage(patient: patient),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
           children: [
             // Avatar
             CircleAvatar(
@@ -104,6 +115,7 @@ class PatientCard extends StatelessWidget {
               color: isMale ? AppTheme.maleColor : AppTheme.femaleColor,
             ),
           ],
+        ),
         ),
       ),
     );
