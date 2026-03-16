@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ACS ACR39U Smart Card Reader -->
+    <usb-device vendor-id="1839" />
+    <!-- ACS ACR38U Smart Card Reader -->
+    <usb-device vendor-id="1839" product-id="8514" />
+    <!-- Generic: allow all USB devices (fallback) -->
+</resources>
