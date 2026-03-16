@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../data/mock_data.dart';
+import 'vital_sign_list_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -148,6 +149,13 @@ class HomePage extends StatelessWidget {
                 label: 'Vital Sign',
                 color: const Color(0xFF3B82F6),
                 bgColor: const Color(0xFFDBEAFE),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const VitalSignListPage()),
+                  );
+                },
               ),
               _buildMenuItem(
                 icon: Icons.medication_outlined,
@@ -179,33 +187,37 @@ class HomePage extends StatelessWidget {
     required String label,
     required Color color,
     required Color bgColor,
+    VoidCallback? onTap,
   }) {
-    return SizedBox(
-      width: 72,
-      child: Column(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(14),
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 28),
             ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: AppTheme.generalText(
-              11,
-              fonWeight: FontWeight.w500,
-              color: AppTheme.primaryText,
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: AppTheme.generalText(
+                11,
+                fonWeight: FontWeight.w500,
+                color: AppTheme.primaryText,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
