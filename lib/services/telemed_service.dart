@@ -51,4 +51,49 @@ class TelemedService {
       return ResponseModel(data: [], responseEnum: ResponseEnum.fail);
     }
   }
+
+  static Future<ResponseModel<AppointmentModel>> findOneAppointment(
+    BuildContext context, {
+    required String id,
+  }) async {
+    log("findOneAppointment");
+
+    final container = ProviderScope.containerOf(context, listen: false);
+    final login = container.read(loginProvider);
+
+    final httpString = MedConfig.https(
+      service: PortConfig.telemedPort,
+      path: 'sessions/$id',
+    );
+
+    log("http = $httpString");
+
+    final uri = Uri.parse(httpString);
+    final httpGetResponse = get(
+      uri,
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${login.accessToken}',
+      },
+    );
+
+    final response = await httpGetResponse;
+
+    log("response = ${response.body}");
+    log("response.statusCode = ${response.statusCode}");
+
+    if (response.statusCode == 200) {
+      final responseJS = Map.from(jsonDecode(response.body));
+      return ResponseModel(
+        data: AppointmentModel(data: responseJS['data']),
+        responseEnum: ResponseEnum.success,
+      );
+    } else {
+      return ResponseModel(
+        data: AppointmentModel(data: {}),
+        responseEnum: ResponseEnum.fail,
+      );
+    }
+  }
 }
