@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   charset_converter
+  flutter_inappwebview_windows
   flutter_localization
   permission_handler_windows
 )
