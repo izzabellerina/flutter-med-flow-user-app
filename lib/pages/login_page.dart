@@ -1,31 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/theme.dart';
+import '../models/response_model.dart';
+import '../provider/common_provider.dart';
+import '../services/auth_service.dart';
+import '../services/local_storage_service.dart';
 import 'main_page.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+  bool _isLoading = false;
 
-  void _login() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainPage()),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
   }
 
-  void _loginWithGoogle() {
-    // Mock Google login
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainPage()),
+  Future<void> _loadSavedCredentials() async {
+    final credentials = await LocalStorageService.getSavedCredentials();
+    if (credentials.isNotEmpty) {
+      _usernameController.text = credentials['username'] ?? '';
+      _passwordController.text = credentials['password'] ?? '';
+      setState(() => _rememberMe = true);
+    }
+  }
+
+  Future<void> _login() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      _showError('กรุณากรอกชื่อเข้าใช้งานและรหัสผ่าน');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthService.login(
+        username: username,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      if (result.responseEnum == ResponseEnum.success) {
+        // Save to provider
+        ref.read(loginProvider.notifier).state = result.data;
+        ref.read(userProvider.notifier).state = result.data.user;
+
+        // Fetch user info via /me
+        final meResult = await AuthService.me(context);
+        if (!mounted) return;
+        if (meResult.responseEnum == ResponseEnum.success) {
+          ref.read(userProvider.notifier).state = meResult.data;
+        }
+
+        // Save or clear credentials
+        if (_rememberMe) {
+          await LocalStorageService.saveCredentials(
+            username: username,
+            password: password,
+          );
+        } else {
+          await LocalStorageService.clearCredentials();
+        }
+
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+        );
+      } else {
+        _showError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
@@ -99,6 +173,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: _usernameController,
+                        enabled: !_isLoading,
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.person,
                               color: AppTheme.secondaryText62),
@@ -123,6 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        enabled: !_isLoading,
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.lock,
                               color: AppTheme.secondaryText62),
@@ -141,6 +217,35 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Remember me checkbox
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: Checkbox(
+                              value: _rememberMe,
+                              onChanged: _isLoading
+                                  ? null
+                                  : (v) {
+                                      setState(
+                                          () => _rememberMe = v ?? false);
+                                    },
+                              activeColor: AppTheme.primaryThemeApp,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'จดจำบัญชีผู้ใช้',
+                            style: AppTheme.generalText(
+                              14,
+                              color: AppTheme.primaryText,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 24),
 
@@ -171,7 +276,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Google Sign-In Button
                       OutlinedButton.icon(
-                        onPressed: _loginWithGoogle,
+                        onPressed: _isLoading ? null : () {},
                         icon: Image.network(
                           'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                           height: 20,
@@ -196,8 +301,17 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Login Button
                       ElevatedButton(
-                        onPressed: _login,
-                        child: const Text('ล็อคอิน'),
+                        onPressed: _isLoading ? null : _login,
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('ล็อคอิน'),
                       ),
                     ],
                   ),
