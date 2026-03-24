@@ -11,6 +11,7 @@ class MedConfig {
 
 class PortConfig {
   static const String authPort = "auth";
+  static const String telemedPort = "telemed";
 }
 
 class MyHttpOverrides extends HttpOverrides {

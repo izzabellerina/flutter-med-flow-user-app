@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
-import '../models/appointment.dart';
+import '../models/appointment_model.dart';
 import '../widgets/diagnosis_tab.dart';
 import '../widgets/measurement_tab.dart';
 import '../widgets/patient_detail_bottom_sheet.dart';
@@ -8,7 +8,7 @@ import '../widgets/screening_tab.dart';
 import '../widgets/treatment_order_tab.dart';
 
 class AppointmentDetailPage extends StatefulWidget {
-  final Appointment appointment;
+  final AppointmentModel appointment;
 
   const AppointmentDetailPage({super.key, required this.appointment});
 
@@ -107,6 +107,13 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
 
   Widget _buildPatientCard() {
     final appt = widget.appointment;
+    final patient = appt.patient;
+    final patientName =
+        '${patient.prefix}${patient.firstName} ${patient.lastName}';
+    final patientNameEn = patient.firstNameEn.isNotEmpty
+        ? '${patient.firstNameEn} ${patient.lastNameEn}'
+        : null;
+    final photoUrl = patient.photoUrl;
 
     return Container(
       color: Colors.white,
@@ -123,10 +130,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                 CircleAvatar(
                   radius: 36,
                   backgroundColor: AppTheme.bgColor,
-                  backgroundImage: appt.patientAvatarUrl != null
-                      ? NetworkImage(appt.patientAvatarUrl!)
+                  backgroundImage: photoUrl.isNotEmpty
+                      ? NetworkImage(photoUrl)
                       : null,
-                  child: appt.patientAvatarUrl == null
+                  child: photoUrl.isEmpty
                       ? Icon(
                           Icons.person,
                           size: 40,
@@ -142,17 +149,17 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        appt.patientName,
+                        patientName,
                         style: AppTheme.generalText(
                           17,
                           fonWeight: FontWeight.bold,
                           color: AppTheme.primaryText,
                         ),
                       ),
-                      if (appt.patientNameEn != null) ...[
+                      if (patientNameEn != null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          appt.patientNameEn!,
+                          patientNameEn,
                           style: AppTheme.generalText(
                             14,
                             color: AppTheme.secondaryText62,
@@ -160,16 +167,15 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                         ),
                       ],
                       const SizedBox(height: 6),
-                      if (appt.birthDate != null)
-                        Text(
-                          'วันเดือนปีเกิด : ${appt.birthDate}',
-                          style: AppTheme.generalText(
-                            13,
-                            color: AppTheme.secondaryText62,
-                          ),
+                      Text(
+                        'วันเดือนปีเกิด : ${_formatBirthDate(patient.birthDate)}',
+                        style: AppTheme.generalText(
+                          13,
+                          color: AppTheme.secondaryText62,
                         ),
+                      ),
                       // HN Badge
-                      if (appt.isRegistered && appt.patientHn != null) ...[
+                      if (patient.hn.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -184,7 +190,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                             ),
                           ),
                           child: Text(
-                            'HN : ${appt.patientHn}',
+                            'HN : ${patient.hn}',
                             style: AppTheme.generalText(
                               13,
                               fonWeight: FontWeight.w600,
@@ -207,14 +213,14 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                       onTap: () {
                         PatientDetailBottomSheet.show(
                           context,
-                          patientHn: appt.patientHn,
-                          patientName: appt.patientName,
-                          patientNameEn: appt.patientNameEn,
-                          avatarUrl: appt.patientAvatarUrl,
+                          patientHn: patient.hn.isNotEmpty ? patient.hn : null,
+                          patientName: patientName,
+                          patientNameEn: patientNameEn,
+                          avatarUrl:
+                              photoUrl.isNotEmpty ? photoUrl : null,
                         );
                       },
                     ),
-                    // const SizedBox(height: 2),
                     _ActionIconButton(
                       icon: Icons.phone,
                       label: 'Telemed',
@@ -238,6 +244,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildTelemedPanel({double? height}) {
+    final patient = widget.appointment.patient;
+    final patientName =
+        '${patient.prefix}${patient.firstName} ${patient.lastName}';
+
     return Container(
       width: double.infinity,
       height: height,
@@ -256,7 +266,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           const SizedBox(height: 16),
 
           Text(
-            widget.appointment.patientName,
+            patientName,
             style: AppTheme.generalText(
               16,
               fonWeight: FontWeight.w600,
@@ -327,7 +337,11 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
               const ScreeningTab(),
               const MeasurementTab(),
               const DiagnosisTab(),
-              TreatmentOrderTab(patientHn: widget.appointment.patientHn),
+              TreatmentOrderTab(
+                patientHn: widget.appointment.patient.hn.isNotEmpty
+                    ? widget.appointment.patient.hn
+                    : null,
+              ),
             ],
           ),
         ),
@@ -341,6 +355,8 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
 
   Widget _buildAppointmentInfoTab() {
     final appt = widget.appointment;
+    final doctor = appt.doctor;
+    final scheduledDate = _formatDate(appt.scheduledAt);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -354,12 +370,12 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           _buildInfoCard([
             _InfoRow(
               label: 'วันที่นัด',
-              child: _buildDateBadge(appt.appointmentDate ?? '-'),
+              child: _buildDateBadge(scheduledDate),
             ),
             _InfoRow(
               label: 'สถานะ',
               child: Text(
-                appt.status,
+                _statusLabel(appt.status),
                 style: AppTheme.generalText(
                   14,
                   fonWeight: FontWeight.w600,
@@ -367,27 +383,24 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                 ),
               ),
             ),
-            _InfoRow(
-              label: 'เวลามา',
-              child: Text(
-                appt.arrivalTime ?? 'ยังไม่มาโรงพยาบาล',
-                style: AppTheme.generalText(
-                  14,
-                  color: appt.arrivalTime != null
-                      ? AppTheme.primaryText
-                      : AppTheme.secondaryText62,
+            if (appt.roomName.isNotEmpty)
+              _InfoRow(
+                label: 'ห้อง',
+                child: Text(
+                  appt.roomName,
+                  style: AppTheme.generalText(14, color: AppTheme.primaryText),
                 ),
               ),
-            ),
           ]),
 
           const SizedBox(height: 20),
 
           // แพทย์ section
-          _buildSectionHeader('แพทย์'),
-          const SizedBox(height: 12),
-
-          ...appt.doctorVisits.map((visit) => _buildDoctorCard(visit)),
+          if (doctor.fullName.isNotEmpty) ...[
+            _buildSectionHeader('แพทย์'),
+            const SizedBox(height: 12),
+            _buildDoctorCardFromModel(doctor),
+          ],
 
           // โน้ต section
           const SizedBox(height: 20),
@@ -402,7 +415,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
               border: Border.all(color: AppTheme.lineColorD9),
             ),
             child: Text(
-              appt.note?.isNotEmpty == true ? appt.note! : '-',
+              appt.notes.isNotEmpty ? appt.notes : '-',
               style: AppTheme.generalText(14, color: AppTheme.secondaryText62),
             ),
           ),
@@ -501,7 +514,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     );
   }
 
-  Widget _buildDoctorCard(DoctorVisit visit) {
+  Widget _buildDoctorCardFromModel(dynamic doctor) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
@@ -514,90 +527,35 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Doctor avatar
           CircleAvatar(
             radius: 24,
             backgroundColor: AppTheme.primaryThemeApp.withValues(alpha: 0.1),
-            backgroundImage: visit.doctorAvatarUrl != null
-                ? NetworkImage(visit.doctorAvatarUrl!)
-                : null,
-            child: visit.doctorAvatarUrl == null
-                ? Icon(Icons.person, size: 26, color: AppTheme.primaryThemeApp)
-                : null,
+            child:
+                Icon(Icons.person, size: 26, color: AppTheme.primaryThemeApp),
           ),
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  visit.doctorName,
+                  doctor.fullName,
                   style: AppTheme.generalText(
                     15,
                     fonWeight: FontWeight.bold,
                     color: AppTheme.primaryText,
                   ),
                 ),
-                const SizedBox(height: 4),
-
-                // Time badge
-                if (visit.appointmentTime != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    margin: const EdgeInsets.only(bottom: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.timeBadgeColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: AppTheme.timeBadgeTextColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'เวลานัด ${visit.appointmentTime} น.',
-                          style: AppTheme.generalText(
-                            12,
-                            fonWeight: FontWeight.w500,
-                            color: AppTheme.timeBadgeTextColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                Text(
-                  'จุดประสงค์ : ${visit.purpose}',
-                  style: AppTheme.generalText(
-                    13,
-                    color: AppTheme.secondaryText62,
-                  ),
-                ),
-                if (visit.forDepartment != null &&
-                    visit.forDepartment!.isNotEmpty)
+                if (widget.appointment.chiefComplaint.isNotEmpty) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    'สำหรับ : ${visit.forDepartment}',
+                    'อาการ : ${widget.appointment.chiefComplaint}',
                     style: AppTheme.generalText(
                       13,
                       color: AppTheme.secondaryText62,
                     ),
                   ),
-                if (visit.department != null)
-                  Text(
-                    'แผนก : ${visit.department}',
-                    style: AppTheme.generalText(
-                      13,
-                      color: AppTheme.secondaryText62,
-                    ),
-                  ),
+                ],
               ],
             ),
           ),
@@ -606,19 +564,50 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     );
   }
 
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return 'นัดหมาย';
+      case 'waiting':
+        return 'รอตรวจ';
+      case 'in_progress':
+        return 'กำลังตรวจ';
+      case 'completed':
+        return 'เสร็จสิ้น';
+      case 'cancelled':
+        return 'ยกเลิก';
+      default:
+        return status;
+    }
+  }
+
   Color _statusColor(String status) {
-    switch (status) {
-      case 'Booked':
+    switch (status.toLowerCase()) {
+      case 'scheduled':
         return AppTheme.primaryThemeApp;
-      case 'Checked-In':
+      case 'waiting':
+        return Colors.orange;
+      case 'in_progress':
         return AppTheme.statusGreen;
-      case 'Completed':
+      case 'completed':
         return AppTheme.successColor;
-      case 'Cancelled':
+      case 'cancelled':
         return AppTheme.errorColor;
       default:
         return AppTheme.secondaryText62;
     }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.year}';
+  }
+
+  String _formatBirthDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year + 543}';
   }
 }
 
