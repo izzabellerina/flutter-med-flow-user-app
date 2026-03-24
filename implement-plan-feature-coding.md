@@ -12,7 +12,8 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - Google Fonts (Athiti)
 - flutter_blue_plus (BLE medical device communication)
 - permission_handler (runtime permissions for Bluetooth)
-- Mock data (pending API integration)
+- API integration (auth, telemed/appointment)
+- Mock data (for patient list, vital signs — pending API integration)
 
 ## Color Theme (Teal-based)
 - Primary Teal: #0d9488
@@ -29,17 +30,23 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 ## Features
 
 ### 1. Login Page ✅
-- **Status**: Implemented
+- **Status**: Implemented (API integrated)
 - **File**: `lib/pages/login_page.dart`
 - **Description**: Login page with username/password fields and Google Sign-In button
 - **UI**: Teal gradient background, white card form, Google login + standard login buttons
-- **Data**: Mock authentication (any credentials accepted)
+- **Data**: API — `AuthService.login()` → `/api/v1/auth/login`, then `AuthService.me()` → `/api/v1/auth/me`
+- **Features**:
+  - Riverpod (`ConsumerStatefulWidget`) — stores token/user in `loginProvider`/`userProvider`
+  - "จดจำบัญชีผู้ใช้" checkbox — saves/loads credentials via `shared_preferences` (`LocalStorageService`)
+  - Loading spinner + error SnackBar
+- **Dependencies**: `lib/services/auth_service.dart`, `lib/services/local_storage_service.dart`, `lib/provider/common_provider.dart`
 
 ### 2. Home Page (หน้าหลัก) ✅
-- **Status**: Implemented
+- **Status**: Implemented (API integrated)
 - **File**: `lib/pages/home_page.dart`
-- **Description**: Coming soon placeholder page
-- **UI**: Hospital illustration icon, "พบกับหน้าแรกในเร็ว ๆ นี้" text, version info
+- **Description**: Dashboard หน้าแรก — profile card, เมนูแนะนำ, ส่งต่อโรงพยาบาล, ประกาศ
+- **UI**: Profile card (gradient, user fullName/systemRole from `userProvider`), 4 menu icons (Vital Sign, รายการสั่งยา, ผลวินิจฉัย, รายงาน), queue cards, announcement cards
+- **Data**: `ref.watch(userProvider)` for profile info (from API `/me`)
 
 ### 3. Patient List Page (คนไข้) ✅
 - **Status**: Implemented
@@ -50,12 +57,13 @@ Thai language UI. Theme follows MedFlow HIS web application design system.
 - **Data**: Mock patient data (5 patients)
 
 ### 4. Appointment List Page (นัดหมาย) ✅
-- **Status**: Implemented
+- **Status**: Implemented (API integrated)
 - **File**: `lib/pages/appointment_list_page.dart`
 - **Description**: List of appointments with date filter and search
-- **UI**: Search bar, date picker, unregistered filter checkbox, appointment cards with doctor info
+- **UI**: Search bar (ชื่อ/HN), date picker, appointment cards with doctor info, loading/error/empty states, pull-to-refresh
 - **Responsive**: Tablet landscape — search panel ซ้าย (350px), card list ขวา (>= 700px)
-- **Data**: Mock appointment data (4 appointments)
+- **Data**: API — `TelemedService.appointment()` → `/api/v1/telemed/sessions?date=YYYY-MM-DD`
+- **Models**: `AppointmentModel` (with nested `PatientModel`, `DoctorModel`)
 - **FAB**: ปุ่ม + สำหรับสร้างนัดหมายใหม่ → push to CreateAppointmentPage
 
 ### 5. Create Appointment Page (สร้างนัดหมายใหม่) 🚧
@@ -122,7 +130,14 @@ lib/
 │   └── theme.dart
 ├── models/
 │   ├── patient.dart
-│   ├── appointment.dart
+│   ├── patient_model.dart          (API model — Map-based)
+│   ├── appointment.dart            (legacy mock model)
+│   ├── appointment_model.dart      (API model — Map-based, with PatientModel/DoctorModel)
+│   ├── doctor_model.dart           (API model)
+│   ├── login_model.dart            (API model — access_token, refresh_token, user, hospital)
+│   ├── user_model.dart             (API model — id, username, fullName, systemRole, features)
+│   ├── hospital_model.dart         (API model)
+│   ├── response_model.dart         (generic API response wrapper)
 │   ├── diagnosis.dart
 │   ├── screening.dart
 │   ├── vital_sign.dart
@@ -138,9 +153,16 @@ lib/
 │   ├── appointment_detail_page.dart
 │   └── profile_page.dart
 ├── services/
+│   ├── auth_service.dart           (login, me API)
+│   ├── telemed_service.dart        (appointment sessions API)
+│   ├── local_storage_service.dart  (shared_preferences — remember credentials)
+│   ├── configuration.dart          (API base URL, port config)
+│   ├── android_bridge.dart         (MethodChannel — Thai ID card reader)
 │   ├── ble_service.dart
 │   ├── ble_permission_handler.dart
 │   └── ble_gatt_parser.dart
+├── provider/
+│   └── common_provider.dart        (loginProvider, userProvider)
 ├── widgets/
 │   ├── patient_card.dart
 │   ├── appointment_card.dart
@@ -215,7 +237,8 @@ lib/
 ---
 
 ## Pending / Future Features
-- [ ] API integration (replace mock data)
+- [x] API integration — Login (`AuthService`), User profile (`AuthService.me`), Appointments (`TelemedService`)
+- [ ] API integration — Patient list, Vital Signs (ยังใช้ mock data)
 - [ ] Real Google Sign-In authentication
 - [x] Patient detail page — กดจาก PatientCard → push to detail page, 4 แท็ป (สำคัญ/ส่วนตัว/สุขภาพ/แพ้ยา)
 - [x] Appointment detail — แท็ปคัดกรอง (CC, PI, PH, PE)

@@ -1,26 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/theme.dart';
-import '../data/mock_data.dart';
+import '../models/appointment_model.dart';
+import '../models/response_model.dart';
+import '../services/telemed_service.dart';
 import '../widgets/appointment_card.dart';
 import 'create_appointment_page.dart';
 
-class AppointmentListPage extends StatefulWidget {
+class AppointmentListPage extends ConsumerStatefulWidget {
   const AppointmentListPage({super.key});
 
   @override
-  State<AppointmentListPage> createState() => _AppointmentListPageState();
+  ConsumerState<AppointmentListPage> createState() =>
+      _AppointmentListPageState();
 }
 
-class _AppointmentListPageState extends State<AppointmentListPage> {
+class _AppointmentListPageState extends ConsumerState<AppointmentListPage> {
   final _searchController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  bool _showUnregisteredOnly = false;
+  String _searchQuery = '';
+  List<AppointmentModel> _appointments = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  List<dynamic> get _filteredAppointments {
-    if (_showUnregisteredOnly) {
-      return MockData.appointments.where((a) => !a.isRegistered).toList();
+  @override
+  void initState() {
+    super.initState();
+    _fetchAppointments();
+  }
+
+  Future<void> _fetchAppointments() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final dateStr =
+          '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+
+      final result = await TelemedService.appointment(
+        context,
+        date: dateStr,
+      );
+
+      if (!mounted) return;
+
+      if (result.responseEnum == ResponseEnum.success) {
+        setState(() {
+          _appointments = result.data;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _appointments = [];
+          _isLoading = false;
+          _errorMessage = 'ไม่สามารถโหลดข้อมูลนัดหมายได้';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'เกิดข้อผิดพลาด: $e';
+      });
     }
-    return MockData.appointments;
+  }
+
+  List<AppointmentModel> get _filteredAppointments {
+    if (_searchQuery.isEmpty) return _appointments;
+    final q = _searchQuery.toLowerCase();
+    return _appointments.where((a) {
+      final patientName =
+          '${a.patient.prefix}${a.patient.firstName} ${a.patient.lastName}'
+              .toLowerCase();
+      final hn = a.patient.hn.toLowerCase();
+      return patientName.contains(q) || hn.contains(q);
+    }).toList();
   }
 
   Future<void> _pickDate() async {
@@ -32,6 +88,7 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
+      _fetchAppointments();
     }
   }
 
@@ -128,8 +185,9 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
               Expanded(
                 child: TextField(
                   controller: _searchController,
+                  onChanged: (v) => setState(() => _searchQuery = v),
                   decoration: InputDecoration(
-                    hintText: 'ชื่อ-นามสกุล คนไข้',
+                    hintText: 'ชื่อ-นามสกุล หรือ HN',
                     hintStyle: TextStyle(color: AppTheme.secondaryText62),
                     prefixIcon:
                         Icon(Icons.search, color: AppTheme.secondaryText62),
@@ -192,43 +250,17 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
           ),
           const SizedBox(height: 12),
 
-          // Filter row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Checkbox(
-                      value: _showUnregisteredOnly,
-                      onChanged: (v) {
-                        setState(
-                            () => _showUnregisteredOnly = v ?? false);
-                      },
-                      activeColor: AppTheme.primaryThemeApp,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'ยังไม่ลงทะเบียน',
-                    style: AppTheme.generalText(
-                      14,
-                      color: AppTheme.primaryText,
-                    ),
-                  ),
-                ],
+          // Count
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'ทั้งหมด ${appointments.length}',
+              style: AppTheme.generalText(
+                14,
+                fonWeight: FontWeight.bold,
+                color: AppTheme.primaryText,
               ),
-              Text(
-                'ทั้งหมด ${appointments.length}',
-                style: AppTheme.generalText(
-                  14,
-                  fonWeight: FontWeight.bold,
-                  color: AppTheme.primaryText,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -236,14 +268,54 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
   }
 
   Widget _buildAppointmentList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline,
+                size: 48, color: AppTheme.secondaryText62),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              style:
+                  AppTheme.generalText(14, color: AppTheme.secondaryText62),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _fetchAppointments,
+              child: const Text('ลองใหม่'),
+            ),
+          ],
+        ),
+      );
+    }
+
     final appointments = _filteredAppointments;
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 16),
-      itemCount: appointments.length,
-      itemBuilder: (context, index) {
-        return AppointmentCard(appointment: appointments[index]);
-      },
+    if (appointments.isEmpty) {
+      return Center(
+        child: Text(
+          'ไม่พบรายการนัดหมาย',
+          style: AppTheme.generalText(16, color: AppTheme.secondaryText62),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchAppointments,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(top: 8, bottom: 16),
+        itemCount: appointments.length,
+        itemBuilder: (context, index) {
+          return AppointmentCard(appointment: appointments[index]);
+        },
+      ),
     );
   }
 }
