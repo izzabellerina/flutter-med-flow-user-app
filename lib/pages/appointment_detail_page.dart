@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -98,19 +99,23 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
       return;
     }
 
-    // ขอ permission
-    final statuses = await [Permission.camera, Permission.microphone].request();
+    // ขอ permission — บน iOS ข้าม permission_handler
+    // เพราะ InAppWebView + Info.plist จะทริก native dialog เอง
+    if (Platform.isAndroid) {
+      final statuses =
+          await [Permission.camera, Permission.microphone].request();
 
-    final cameraGranted = statuses[Permission.camera]?.isGranted ?? false;
-    final micGranted = statuses[Permission.microphone]?.isGranted ?? false;
+      final cameraGranted = statuses[Permission.camera]?.isGranted ?? false;
+      final micGranted = statuses[Permission.microphone]?.isGranted ?? false;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (!cameraGranted || !micGranted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาอนุญาตการใช้กล้องและไมโครโฟน')),
-      );
-      return;
+      if (!cameraGranted || !micGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('กรุณาอนุญาตการใช้กล้องและไมโครโฟน')),
+        );
+        return;
+      }
     }
 
     setState(() {
