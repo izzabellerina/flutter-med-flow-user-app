@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/theme.dart';
-import '../data/mock_data.dart';
+import '../provider/common_provider.dart';
 import 'vital_sign_list_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -16,7 +17,7 @@ class HomePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTopBar(),
-              _buildProfileCard(),
+              _buildProfileCard(ref),
               const SizedBox(height: 24),
               _buildMenuSection(context),
               const SizedBox(height: 24),
@@ -72,8 +73,8 @@ class HomePage extends StatelessWidget {
   // Profile card — Blue gradient
   // ══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildProfileCard() {
-    final user = MockData.currentUser;
+  Widget _buildProfileCard(WidgetRef ref) {
+    final user = ref.watch(userProvider);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -106,7 +107,7 @@ class HomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user['name'] ?? '',
+                  user.fullName,
                   style: AppTheme.generalText(
                     20,
                     fonWeight: FontWeight.w700,
@@ -115,7 +116,7 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  user['role'] ?? '',
+                  user.systemRole,
                   style: AppTheme.generalText(
                     14,
                     color: Colors.white.withValues(alpha: 0.8),

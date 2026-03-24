@@ -7,7 +7,7 @@ class UserModel {
 
   String get username => data['username'] ?? '';
 
-  String get fullName => data['fullName'] ?? '';
+  String get fullName => data['full_name'] ?? '';
 
   String get email => data['email'] ?? '';
 
