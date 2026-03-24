@@ -7,11 +7,19 @@ class MedConfig {
   static String https({required String service, required String path}) {
     return "$server/api/api/v1/$service/$path";
   }
+
+  static String httpsWithPublic({
+    required String service,
+    required String path,
+  }) {
+    return "$server/api/api/public/$service/$path";
+  }
 }
 
 class PortConfig {
   static const String authPort = "auth";
   static const String telemedPort = "telemed";
+  static const String clinicPort = "clinical";
 }
 
 class MyHttpOverrides extends HttpOverrides {

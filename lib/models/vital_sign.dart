@@ -25,6 +25,31 @@ class VitalSign {
     required this.recordedAt,
   });
 
+  factory VitalSign.fromJson(Map<String, dynamic> json) {
+    return VitalSign(
+      id: json['id']?.toString() ?? '',
+      bw: _toDouble(json['body_weight']),
+      ht: _toDouble(json['height']),
+      bmi: _toDouble(json['bmi']),
+      sBp: _toDouble(json['systolic_bp']),
+      dBp: _toDouble(json['diastolic_bp']),
+      pr: _toDouble(json['pulse_rate']),
+      o2: _toDouble(json['oxygen_saturation']),
+      temp: _toDouble(json['temperature']),
+      recorderName: json['recorder_name']?.toString() ?? '-',
+      recordedAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+    );
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
   bool get isToday {
     final now = DateTime.now();
     return recordedAt.year == now.year &&
