@@ -1,6 +1,8 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../app/theme.dart';
 import '../models/appointment_model.dart';
 import '../models/response_model.dart';
@@ -24,8 +26,11 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late AppointmentModel _appointment;
-  bool _isTelemedActive = false;
   bool _isLoadingDetail = false;
+
+  // Telemed state
+  bool _isTelemedActive = false;
+  bool _isTelemedFullScreen = false;
 
   final List<String> _tabLabels = const [
     'ข้อมูลนัด',
@@ -79,89 +84,303 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     super.dispose();
   }
 
-  void _toggleTelemed() {
-    setState(() => _isTelemedActive = !_isTelemedActive);
+  Future<void> _startTelemed() async {
+    if (_appointment.sessionToken.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ไม่พบ session token สำหรับ Telemed')),
+      );
+      return;
+    }
+
+    // ถ้าเปิดอยู่แล้ว toggle full screen
+    if (_isTelemedActive) {
+      setState(() => _isTelemedFullScreen = !_isTelemedFullScreen);
+      return;
+    }
+
+    // ขอ permission
+    final statuses = await [Permission.camera, Permission.microphone].request();
+
+    final cameraGranted = statuses[Permission.camera]?.isGranted ?? false;
+    final micGranted = statuses[Permission.microphone]?.isGranted ?? false;
+
+    if (!mounted) return;
+
+    if (!cameraGranted || !micGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรุณาอนุญาตการใช้กล้องและไมโครโฟน')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isTelemedActive = true;
+      _isTelemedFullScreen = true;
+    });
   }
 
   void _endCall() {
-    setState(() => _isTelemedActive = false);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('วางสาย'),
+        content: const Text('ต้องการวางสายวิดีโอคอลหรือไม่?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ยกเลิก'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _isTelemedActive = false;
+                _isTelemedFullScreen = false;
+              });
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('วางสาย'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.bgColor,
-      appBar: AppBar(
-        title: Text(
-          'รายละเอียดนัดหมาย',
-          style: AppTheme.generalText(
-            20,
-            fonWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          if (_isLoadingDetail)
-            const Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
+      appBar: _isTelemedFullScreen
+          ? null
+          : AppBar(
+              title: Text(
+                'รายละเอียดนัดหมาย',
+                style: AppTheme.generalText(
+                  20,
+                  fonWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 700;
-
-            if (isWide) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 380,
-                    child: Column(
-                      children: [
-                        _buildPatientCard(),
-                        if (_isTelemedActive)
-                          Expanded(child: _buildTelemedPanel()),
-                      ],
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
+              actions: [
+                if (_isLoadingDetail)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  VerticalDivider(width: 1, color: AppTheme.lineColorD9),
-                  Expanded(child: _buildTabSection()),
-                ],
-              );
-            }
-
-            return Column(
-              children: [
-                _buildPatientCard(),
-                if (_isTelemedActive) _buildTelemedPanel(height: 250),
-                Expanded(child: _buildTabSection()),
               ],
-            );
-          },
-        ),
+            ),
+      body: SafeArea(
+        child: _isTelemedFullScreen
+            ? _buildFullScreenTelemed()
+            : _buildNormalLayout(),
       ),
     );
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // Full-screen Telemed
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildFullScreenTelemed() {
+    return Column(
+      children: [
+        // Top bar
+        Container(
+          color: AppTheme.primaryThemeApp,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.picture_in_picture_alt,
+                  color: Colors.white,
+                ),
+                tooltip: 'ย่อหน้าต่าง',
+                onPressed: () => setState(() => _isTelemedFullScreen = false),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _patientFullName(),
+                  style: AppTheme.generalText(
+                    16,
+                    fonWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.call_end, color: Colors.red),
+                tooltip: 'วางสาย',
+                onPressed: _endCall,
+              ),
+            ],
+          ),
+        ),
+        // WebView
+        Expanded(child: _buildWebView()),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Normal Layout (with inline mini telemed)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildNormalLayout() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 700;
+        final showMiniTelemed = _isTelemedActive && !_isTelemedFullScreen;
+
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ฝั่งซ้าย: patient card + video call (แนวนอน)
+              SizedBox(
+                width: 380,
+                child: Column(
+                  children: [
+                    _buildPatientCard(),
+                    if (showMiniTelemed)
+                      Expanded(child: _buildMiniTelemed(expandToFill: true)),
+                  ],
+                ),
+              ),
+              VerticalDivider(width: 1, color: AppTheme.lineColorD9),
+              // ฝั่งขวา: tabs
+              Expanded(child: _buildTabSection(showMiniInline: false)),
+            ],
+          );
+        }
+
+        // แนวตั้ง: video อยู่ระหว่าง tab bar กับ content
+        return Column(
+          children: [
+            _buildPatientCard(),
+            Expanded(child: _buildTabSection(showMiniInline: showMiniTelemed)),
+          ],
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // WebView (ใช้ร่วมกันทั้ง full screen และ mini)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildWebView() {
+    final url =
+        'https://med3.medflow.in.th/teleconsult/join/${_appointment.sessionToken}';
+
+    return InAppWebView(
+      initialUrlRequest: URLRequest(url: WebUri(url)),
+      initialSettings: InAppWebViewSettings(
+        mediaPlaybackRequiresUserGesture: false,
+        allowsInlineMediaPlayback: true,
+        javaScriptEnabled: true,
+        domStorageEnabled: true,
+        useWideViewPort: true,
+        supportMultipleWindows: false,
+        useShouldOverrideUrlLoading: false,
+      ),
+      onPermissionRequest: (controller, request) async {
+        return PermissionResponse(
+          resources: request.resources,
+          action: PermissionResponseAction.GRANT,
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Mini Telemed strip (ระหว่าง tab bar กับ tab content)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildMiniTelemed({bool expandToFill = false}) {
+    return Container(
+      height: expandToFill ? null : MediaQuery.of(context).size.height * 0.45,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1a1a2e),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // Mini top bar
+          Container(
+            color: AppTheme.primaryThemeApp,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.videocam, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Telemed - ${_patientFullName()}',
+                    style: AppTheme.generalText(
+                      12,
+                      fonWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() => _isTelemedFullScreen = true),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.fullscreen,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _endCall,
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.call_end, color: Colors.red, size: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // WebView (mini)
+          Expanded(child: _buildWebView()),
+        ],
+      ),
+    );
+  }
+
+  String _patientFullName() {
+    final patient = _appointment.patient;
+    return '${patient.prefix}${patient.firstName} ${patient.lastName}';
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Patient Card
+  // ══════════════════════════════════════════════════════════════════════════
+
   Widget _buildPatientCard() {
     final appt = _appointment;
     final patient = appt.patient;
-    final patientName =
-        '${patient.prefix}${patient.firstName} ${patient.lastName}';
+    final patientName = _patientFullName();
     final patientNameEn = patient.firstNameEn.isNotEmpty
         ? '${patient.firstNameEn} ${patient.lastNameEn}'
         : null;
@@ -275,8 +494,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                     _ActionIconButton(
                       icon: Icons.phone,
                       label: 'Telemed',
-                      isActive: _isTelemedActive,
-                      onTap: _toggleTelemed,
+                      onTap: _startTelemed,
                     ),
                   ],
                 ),
@@ -291,112 +509,62 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // Telemed Panel
+  // Tab Section (tab bar + mini telemed + tab content)
   // ══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildTelemedPanel({double? height}) {
-    final patient = _appointment.patient;
-    final patientName =
-        '${patient.prefix}${patient.firstName} ${patient.lastName}';
-
-    return Container(
-      width: double.infinity,
-      height: height,
-      color: const Color(0xFF1a1a2e),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(),
-
-          // Patient avatar in call
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.person, size: 48, color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-
-          Text(
-            patientName,
-            style: AppTheme.generalText(
-              16,
-              fonWeight: FontWeight.w600,
+  Widget _buildTabSection({bool showMiniInline = false}) {
+    return NestedScrollView(
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          // Tab bar
+          SliverToBoxAdapter(
+            child: Container(
               color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          Text(
-            'กำลังรอการเชื่อมต่อ...',
-            style: AppTheme.generalText(14, color: Colors.white60),
-          ),
-
-          const Spacer(),
-
-          // End call button
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: GestureDetector(
-              onTap: _endCall,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                labelColor: AppTheme.primaryThemeApp,
+                unselectedLabelColor: AppTheme.secondaryText62,
+                labelStyle: AppTheme.generalText(
+                  15,
+                  fonWeight: FontWeight.w600,
                 ),
-                child: const Icon(
-                  Icons.call_end,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                unselectedLabelStyle: AppTheme.generalText(14),
+                indicatorColor: AppTheme.primaryThemeApp,
+                indicatorWeight: 3,
+                tabAlignment: TabAlignment.start,
+                tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
               ),
             ),
+          ),
+          SliverToBoxAdapter(
+            child: Divider(height: 1, color: AppTheme.lineColorD9),
+          ),
+
+          // Mini telemed (scroll ไปพร้อมเนื้อหา ทุกแท็ป)
+          if (showMiniInline)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: _buildMiniTelemed(),
+              ),
+            ),
+        ];
+      },
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildAppointmentInfoTab(),
+          const ScreeningTab(),
+          const MeasurementTab(),
+          const DiagnosisTab(),
+          TreatmentOrderTab(
+            patientHn: _appointment.patient.hn.isNotEmpty
+                ? _appointment.patient.hn
+                : null,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTabSection() {
-    return Column(
-      children: [
-        // Tab bar
-        Container(
-          color: Colors.white,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: AppTheme.primaryThemeApp,
-            unselectedLabelColor: AppTheme.secondaryText62,
-            labelStyle: AppTheme.generalText(15, fonWeight: FontWeight.w600),
-            unselectedLabelStyle: AppTheme.generalText(14),
-            indicatorColor: AppTheme.primaryThemeApp,
-            indicatorWeight: 3,
-            tabAlignment: TabAlignment.start,
-            tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
-          ),
-        ),
-        Divider(height: 1, color: AppTheme.lineColorD9),
-
-        // Tab content
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildAppointmentInfoTab(),
-              const ScreeningTab(),
-              const MeasurementTab(),
-              const DiagnosisTab(),
-              TreatmentOrderTab(
-                patientHn: _appointment.patient.hn.isNotEmpty
-                    ? _appointment.patient.hn
-                    : null,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -672,18 +840,16 @@ class _ActionIconButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool isActive;
 
   const _ActionIconButton({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.isActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppTheme.statusGreen : AppTheme.primaryThemeApp;
+    final color = AppTheme.primaryThemeApp;
 
     return OutlinedButton.icon(
       onPressed: onTap,

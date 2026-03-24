@@ -7,12 +7,15 @@
 #include "generated_plugin_registrant.h"
 
 #include <charset_converter/charset_converter_plugin.h>
+#include <flutter_inappwebview_windows/flutter_inappwebview_windows_plugin_c_api.h>
 #include <flutter_localization/flutter_localization_plugin_c_api.h>
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
   CharsetConverterPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("CharsetConverterPlugin"));
+  FlutterInappwebviewWindowsPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FlutterInappwebviewWindowsPluginCApi"));
   FlutterLocalizationPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("FlutterLocalizationPluginCApi"));
   PermissionHandlerWindowsPluginRegisterWithRegistrar(
