@@ -8,13 +8,18 @@ class PatientModel {
 
   PatientModel({required this.data});
 
+  static DateTime? _tryParse(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return DateTime.tryParse(value);
+  }
+
   String get id => data['id'] ?? '';
 
-  DateTime get createdAt => DateTime.parse(data['created_at'] ?? '');
+  DateTime? get createdAt => _tryParse(data['created_at']);
 
-  DateTime get updatedAt => DateTime.parse(data['updated_at'] ?? '');
+  DateTime? get updatedAt => _tryParse(data['updated_at']);
 
-  DateTime? get deletedAt => DateTime.parse(data['deleted_at'] ?? '');
+  DateTime? get deletedAt => _tryParse(data['deleted_at']);
 
   String get tenantId => data['tenant_id'] ?? '';
 
@@ -36,7 +41,7 @@ class PatientModel {
 
   String get lastNameEn => data['last_name_en'] ?? '';
 
-  DateTime get birthDate => DateTime.parse(data['birth_date'] ?? '');
+  DateTime? get birthDate => _tryParse(data['birth_date']);
 
   String get gender => data['gender'] ?? '';
 
@@ -98,14 +103,13 @@ class PatientModel {
 
   String get patientStatus => data['patient_status'] ?? '';
 
-  DateTime? get firstVisitDate =>
-      DateTime.parse(data['first_visit_date'] ?? '');
+  DateTime? get firstVisitDate => _tryParse(data['first_visit_date']);
 
-  DateTime? get lastVisitDate => DateTime.parse(data['last_visit_date'] ?? '');
+  DateTime? get lastVisitDate => _tryParse(data['last_visit_date']);
 
   bool get isDeceased => data['is_deceased'] ?? false;
 
-  DateTime? get deceasedDate => DateTime.parse(data['deceased_date'] ?? '');
+  DateTime? get deceasedDate => _tryParse(data['deceased_date']);
 
   String? get createdBy => data['created_by'] ?? '';
 

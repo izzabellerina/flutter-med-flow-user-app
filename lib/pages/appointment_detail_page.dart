@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../models/appointment_model.dart';
+import '../models/response_model.dart';
+import '../services/telemed_service.dart';
 import '../widgets/diagnosis_tab.dart';
 import '../widgets/measurement_tab.dart';
 import '../widgets/patient_detail_bottom_sheet.dart';
@@ -19,7 +23,9 @@ class AppointmentDetailPage extends StatefulWidget {
 class _AppointmentDetailPageState extends State<AppointmentDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late AppointmentModel _appointment;
   bool _isTelemedActive = false;
+  bool _isLoadingDetail = false;
 
   final List<String> _tabLabels = const [
     'ข้อมูลนัด',
@@ -32,7 +38,39 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   @override
   void initState() {
     super.initState();
+    _appointment = widget.appointment;
     _tabController = TabController(length: _tabLabels.length, vsync: this);
+    _fetchDetail();
+  }
+
+  Future<void> _fetchDetail() async {
+    if (_appointment.id.isEmpty) return;
+
+    setState(() => _isLoadingDetail = true);
+
+    try {
+      final result = await TelemedService.findOneAppointment(
+        context,
+        id: _appointment.id,
+      );
+
+      if (!mounted) return;
+
+      if (result.responseEnum == ResponseEnum.success) {
+        setState(() {
+          _appointment = result.data;
+          _isLoadingDetail = false;
+        });
+        log('findOneAppointment success: ${_appointment.id}');
+      } else {
+        setState(() => _isLoadingDetail = false);
+        log('findOneAppointment failed');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingDetail = false);
+      log('findOneAppointment error: $e');
+    }
   }
 
   @override
@@ -66,6 +104,20 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (_isLoadingDetail)
+            const Padding(
+              padding: EdgeInsets.only(right: 16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -106,7 +158,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   }
 
   Widget _buildPatientCard() {
-    final appt = widget.appointment;
+    final appt = _appointment;
     final patient = appt.patient;
     final patientName =
         '${patient.prefix}${patient.firstName} ${patient.lastName}';
@@ -168,7 +220,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                       ],
                       const SizedBox(height: 6),
                       Text(
-                        'วันเดือนปีเกิด : ${_formatBirthDate(patient.birthDate)}',
+                        'วันเดือนปีเกิด : ${patient.birthDate != null ? _formatBirthDate(patient.birthDate!) : '-'}',
                         style: AppTheme.generalText(
                           13,
                           color: AppTheme.secondaryText62,
@@ -216,8 +268,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                           patientHn: patient.hn.isNotEmpty ? patient.hn : null,
                           patientName: patientName,
                           patientNameEn: patientNameEn,
-                          avatarUrl:
-                              photoUrl.isNotEmpty ? photoUrl : null,
+                          avatarUrl: photoUrl.isNotEmpty ? photoUrl : null,
                         );
                       },
                     ),
@@ -244,7 +295,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildTelemedPanel({double? height}) {
-    final patient = widget.appointment.patient;
+    final patient = _appointment.patient;
     final patientName =
         '${patient.prefix}${patient.firstName} ${patient.lastName}';
 
@@ -338,8 +389,8 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
               const MeasurementTab(),
               const DiagnosisTab(),
               TreatmentOrderTab(
-                patientHn: widget.appointment.patient.hn.isNotEmpty
-                    ? widget.appointment.patient.hn
+                patientHn: _appointment.patient.hn.isNotEmpty
+                    ? _appointment.patient.hn
                     : null,
               ),
             ],
@@ -354,9 +405,11 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildAppointmentInfoTab() {
-    final appt = widget.appointment;
+    final appt = _appointment;
     final doctor = appt.doctor;
-    final scheduledDate = _formatDate(appt.scheduledAt);
+    final scheduledDate = appt.scheduledAt != null
+        ? _formatDate(appt.scheduledAt!)
+        : '-';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -368,10 +421,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           const SizedBox(height: 12),
 
           _buildInfoCard([
-            _InfoRow(
-              label: 'วันที่นัด',
-              child: _buildDateBadge(scheduledDate),
-            ),
+            _InfoRow(label: 'วันที่นัด', child: _buildDateBadge(scheduledDate)),
             _InfoRow(
               label: 'สถานะ',
               child: Text(
@@ -530,8 +580,11 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
           CircleAvatar(
             radius: 24,
             backgroundColor: AppTheme.primaryThemeApp.withValues(alpha: 0.1),
-            child:
-                Icon(Icons.person, size: 26, color: AppTheme.primaryThemeApp),
+            child: Icon(
+              Icons.person,
+              size: 26,
+              color: AppTheme.primaryThemeApp,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -546,10 +599,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
                     color: AppTheme.primaryText,
                   ),
                 ),
-                if (widget.appointment.chiefComplaint.isNotEmpty) ...[
+                if (_appointment.chiefComplaint.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'อาการ : ${widget.appointment.chiefComplaint}',
+                    'อาการ : ${_appointment.chiefComplaint}',
                     style: AppTheme.generalText(
                       13,
                       color: AppTheme.secondaryText62,
