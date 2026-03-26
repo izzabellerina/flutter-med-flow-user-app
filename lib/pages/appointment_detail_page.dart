@@ -10,6 +10,7 @@ import '../models/response_model.dart';
 import '../services/telemed_service.dart';
 import '../widgets/diagnosis_tab.dart';
 import '../widgets/measurement_tab.dart';
+import '../widgets/pe_tab.dart';
 import '../widgets/patient_detail_bottom_sheet.dart';
 import '../widgets/screening_tab.dart';
 import '../widgets/treatment_order_tab.dart';
@@ -36,6 +37,7 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
   final List<String> _tabLabels = const [
     'ข้อมูลนัด',
     'คัดกรอง',
+    'ตรวจสุขภาพ',
     'การวัด',
     'วินิจฉัย',
     'สั่งการรักษา',
@@ -561,6 +563,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
         children: [
           _buildAppointmentInfoTab(),
           const ScreeningTab(),
+          PeTab(
+            visitId: _appointment.visitId,
+            patientId: _appointment.patientId,
+          ),
           MeasurementTab(
             sessionToken: _appointment.sessionToken,
             patientId: _appointment.patientId,
