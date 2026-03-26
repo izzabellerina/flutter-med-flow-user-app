@@ -2,17 +2,23 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_med_flow_user_app/models/vital_sign_model.dart';
 import '../app/theme.dart';
 import '../models/request_models/create_vital_sign_model.dart';
 import '../models/response_model.dart';
-import '../models/vital_sign.dart';
+import '../services/clinical_service.dart';
 import '../services/telemed_service.dart';
 import 'ble_measurement_bottom_sheet.dart';
 
 class MeasurementTab extends StatefulWidget {
   final String sessionToken;
+  final String patientId;
 
-  const MeasurementTab({super.key, required this.sessionToken});
+  const MeasurementTab({
+    super.key,
+    required this.sessionToken,
+    required this.patientId,
+  });
 
   @override
   State<MeasurementTab> createState() => _MeasurementTabState();
@@ -27,20 +33,46 @@ class _MeasurementTabState extends State<MeasurementTab> {
   final _o2Controller = TextEditingController();
   final _tempController = TextEditingController();
 
-  List<VitalSign> _vitalSigns = [];
+  List<VitalSignModel> _vitalSigns = [];
+  List<VitalSignModel> _historyVitalSigns = [];
   bool _isLoadingVitalSigns = false;
+  bool _isLoadingHistory = false;
   bool _isSubmitting = false;
-
-  List<VitalSign> get _currentVitalSigns =>
-      _vitalSigns.where((v) => v.isToday).toList();
-
-  List<VitalSign> get _historyVitalSigns =>
-      _vitalSigns.where((v) => !v.isToday).toList();
 
   @override
   void initState() {
     super.initState();
     _fetchVitalSigns();
+    _fetchHistoryVitalSigns();
+  }
+
+  Future<void> _fetchHistoryVitalSigns() async {
+    if (widget.patientId.isEmpty) return;
+
+    setState(() => _isLoadingHistory = true);
+
+    try {
+      final result = await ClinicalService.getAllVitalSign(
+        context,
+        patientId: widget.patientId,
+      );
+
+      if (!mounted) return;
+
+      if (result.responseEnum == ResponseEnum.success) {
+        setState(() {
+          _historyVitalSigns = result.data;
+          _isLoadingHistory = false;
+        });
+      } else {
+        setState(() => _isLoadingHistory = false);
+        log('getAllVitalSign API failed');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingHistory = false);
+      log('getAllVitalSign error: $e');
+    }
   }
 
   Future<void> _fetchVitalSigns() async {
@@ -49,7 +81,7 @@ class _MeasurementTabState extends State<MeasurementTab> {
     setState(() => _isLoadingVitalSigns = true);
 
     try {
-      final result = await TelemedService.vitalSigns(
+      final result = await TelemedService.getVitalSignsForOneVisit(
         context,
         token: widget.sessionToken,
       );
@@ -107,16 +139,13 @@ class _MeasurementTabState extends State<MeasurementTab> {
     try {
       final model = CreateVitalSignModel(
         sessionToken: widget.sessionToken,
-        bodyWeight: double.tryParse(_bwController.text) ?? 0,
-        height: double.tryParse(_htController.text) ?? 0,
-        systolicBp: double.tryParse(_sBpController.text) ?? 0,
-        diastolicBp: double.tryParse(_dBpController.text) ?? 0,
-        temperature: double.tryParse(_tempController.text) ?? 0,
-        oxygenSaturation: double.tryParse(_o2Controller.text) ?? 0,
-        pulseRate: double.tryParse(_prController.text) ?? 0,
-        respiratoryRate: 0,
-        bloodGlucose: 0,
-        painScore: 0,
+        bodyWeight: double.tryParse(_bwController.text),
+        height: double.tryParse(_htController.text),
+        systolicBp: double.tryParse(_sBpController.text),
+        diastolicBp: double.tryParse(_dBpController.text),
+        temperature: double.tryParse(_tempController.text),
+        oxygenSaturation: double.tryParse(_o2Controller.text),
+        pulseRate: double.tryParse(_prController.text),
       );
 
       final result = await TelemedService.createVitalSign(
@@ -174,7 +203,7 @@ class _MeasurementTabState extends State<MeasurementTab> {
 
   @override
   Widget build(BuildContext context) {
-    final current = _currentVitalSigns;
+    final current = _vitalSigns;
     final history = _historyVitalSigns;
 
     return SingleChildScrollView(
@@ -405,10 +434,11 @@ class _MeasurementTabState extends State<MeasurementTab> {
     return field;
   }
 
-  Widget _buildVitalSignCard(VitalSign vs) {
+  Widget _buildVitalSignCard(VitalSignModel vs) {
+    final r = vs.recordedAt;
     final dateStr =
-        '${vs.recordedAt.day} ${_thaiMonth(vs.recordedAt.month)} ${vs.recordedAt.year + 543}, '
-        '${vs.recordedAt.hour.toString().padLeft(2, '0')}:${vs.recordedAt.minute.toString().padLeft(2, '0')} น.';
+        '${r.day} ${_thaiMonth(r.month)} ${r.year + 543}, '
+        '${r.hour.toString().padLeft(2, '0')}:${r.minute.toString().padLeft(2, '0')} น.';
 
     return Container(
       width: double.infinity,
@@ -431,25 +461,25 @@ class _MeasurementTabState extends State<MeasurementTab> {
             ),
           ),
           const SizedBox(height: 10),
-          _buildInfoLine('Bw :', _fmtVal(vs.bw, 'kg')),
-          _buildInfoLine('Ht :', _fmtVal(vs.ht, 'cm')),
+          _buildInfoLine('Bw :', _fmtVal(vs.bodyWeight, 'kg')),
+          _buildInfoLine('Ht :', _fmtVal(vs.height, 'cm')),
           _buildInfoLine('BMI :', _fmtVal(vs.bmi, '')),
-          _buildInfoLine('sBp :', _fmtVal(vs.sBp, '')),
-          _buildInfoLine('dBp :', _fmtVal(vs.dBp, '')),
-          _buildInfoLine('Pr :', _fmtVal(vs.pr, '')),
-          _buildInfoLine('O2 :', _fmtVal(vs.o2, '%')),
-          _buildInfoLine('Temp :', _fmtVal(vs.temp, '°C')),
+          _buildInfoLine('sBp :', _fmtVal(vs.systolicBp, '')),
+          _buildInfoLine('dBp :', _fmtVal(vs.diastolicBp, '')),
+          _buildInfoLine('Pr :', _fmtVal(vs.pulseRate, '')),
+          _buildInfoLine('O2 :', _fmtVal(vs.oxygenSaturation, '%')),
+          _buildInfoLine('Temp :', _fmtVal(vs.temperature, '°C')),
           const SizedBox(height: 8),
+          Text(
+            'ผู้บันทึก: ${vs.recordedBy}',
+            style: AppTheme.generalText(
+              12,
+              color: AppTheme.secondaryText62,
+            ),
+          ),
+          const SizedBox(height: 4),
           Row(
             children: [
-              Text(
-                'ผู้บันทึก: ${vs.recorderName}',
-                style: AppTheme.generalText(
-                  12,
-                  color: AppTheme.secondaryText62,
-                ),
-              ),
-              const SizedBox(width: 12),
               Icon(
                 Icons.access_time,
                 size: 14,
@@ -498,8 +528,8 @@ class _MeasurementTabState extends State<MeasurementTab> {
     );
   }
 
-  String _fmtVal(double? value, String unit) {
-    if (value == null) return '-';
+  String _fmtVal(double value, String unit) {
+    if (value == 0.0) return '-';
     final v = value == value.roundToDouble()
         ? value.toInt().toString()
         : value.toStringAsFixed(1);
