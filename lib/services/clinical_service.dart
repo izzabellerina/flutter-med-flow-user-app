@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart';
 
 class ClinicalService {
-  static Future<ResponseModel<List<VitalSignModel>>> vitalSigns(
+  static Future<ResponseModel<List<VitalSignModel>>> getAllVitalSign(
     BuildContext context, {
     required String patientId,
   }) async {

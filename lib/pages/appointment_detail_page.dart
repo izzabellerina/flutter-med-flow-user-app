@@ -561,7 +561,10 @@ class _AppointmentDetailPageState extends State<AppointmentDetailPage>
         children: [
           _buildAppointmentInfoTab(),
           const ScreeningTab(),
-          MeasurementTab(sessionToken: _appointment.sessionToken),
+          MeasurementTab(
+            sessionToken: _appointment.sessionToken,
+            patientId: _appointment.patientId,
+          ),
           const DiagnosisTab(),
           TreatmentOrderTab(
             patientHn: _appointment.patient.hn.isNotEmpty

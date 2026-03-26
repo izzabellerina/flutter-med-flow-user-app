@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_med_flow_user_app/models/appointment_model.dart';
 import 'package:flutter_med_flow_user_app/models/request_models/create_vital_sign_model.dart';
 import 'package:flutter_med_flow_user_app/models/response_model.dart';
-import 'package:flutter_med_flow_user_app/models/vital_sign.dart';
+import 'package:flutter_med_flow_user_app/models/vital_sign_model.dart';
 import 'package:flutter_med_flow_user_app/provider/common_provider.dart';
 import 'package:flutter_med_flow_user_app/services/configuration.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -99,11 +99,11 @@ class TelemedService {
     }
   }
 
-  static Future<ResponseModel<List<VitalSign>>> vitalSigns(
+  static Future<ResponseModel<List<VitalSignModel>>> getVitalSignsForOneVisit(
     BuildContext context, {
     required String token,
   }) async {
-    log("vitalSigns");
+    log("getVitalSignsForOneVisit");
 
     final container = ProviderScope.containerOf(context, listen: false);
     final login = container.read(loginProvider);
@@ -132,7 +132,7 @@ class TelemedService {
       final responseJS = Map.from(jsonDecode(response.body));
       final list = List.from(
         responseJS['data'] ?? [],
-      ).map((e) => VitalSign.fromJson(Map<String, dynamic>.from(e))).toList();
+      ).map((e) => VitalSignModel(data: e)).toList();
       return ResponseModel(data: list, responseEnum: ResponseEnum.success);
     } else {
       return ResponseModel(data: [], responseEnum: ResponseEnum.fail);
