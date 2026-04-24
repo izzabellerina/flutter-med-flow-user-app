@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../app/app_version.dart';
 import '../app/theme.dart';
 import '../models/response_model.dart';
 import '../provider/common_provider.dart';
@@ -153,6 +154,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         'ลงทะเบียนคนไข้',
                         style: AppTheme.generalText(
                           16,
+                          color: AppTheme.secondaryText62,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        AppVersion.full,
+                        style: AppTheme.generalText(
+                          11,
                           color: AppTheme.secondaryText62,
                         ),
                       ),
