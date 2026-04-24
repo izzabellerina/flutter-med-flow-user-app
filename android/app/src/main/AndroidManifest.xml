@@ -20,6 +20,11 @@
         android:label="flutter_med_flow_user_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- ปิด Impeller ใช้ Skia แทน -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

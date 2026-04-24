@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'app/app_version.dart';
 import 'app/theme.dart';
 import 'pages/login_page.dart';
 import 'services/configuration.dart';
@@ -11,6 +12,7 @@ import 'services/configuration.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterLocalization.instance.ensureInitialized();
+  await AppVersion.init();
   HttpOverrides.global = MyHttpOverrides();
   runApp(const ProviderScope(child: MyApp()));
 }
